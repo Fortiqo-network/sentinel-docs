@@ -1,47 +1,55 @@
----
-title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
----
+# Mintlify Starter Kit
 
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
+Use the starter kit to get your docs deployed and ready to customize.
 
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
+Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
 
-## Prerequisites
+- Guide pages
+- Navigation
+- Customizations
+- API reference pages
+- Use of popular components
 
-Before you begin, you must have:
+**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+## AI-assisted writing
 
-## Get started
+Set up your AI coding tool to work with Mintlify:
 
-<Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
+```bash
+npx skills add https://mintlify.com/docs
+```
 
-    ```bash
-    npm install your-package
-    ```
-  </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
 
-    ```bash
-    your-cli init
-    ```
-  </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+See the [AI tools guides](/ai-tools) for tool-specific setup.
 
-    ```bash
-    your-cli start
-    ```
-  </Step>
-</Steps>
+## Development
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
-</Tip>
+```
+npm i -g mint
+```
+
+Run the following command at the root of your documentation, where your `docs.json` is located:
+
+```
+mint dev
+```
+
+View your local preview at `http://localhost:3000`.
+
+## Publishing changes
+
+Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+
+## Need help?
+
+### Troubleshooting
+
+- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
+- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+
+### Resources
+- [Mintlify documentation](https://mintlify.com/docs)
