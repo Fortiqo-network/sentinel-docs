@@ -1,0 +1,335 @@
+---
+title: "TypeScript SDK"
+description: "Complete reference for the Sentinel TypeScript SDK — installation, configuration, and every available method."
+---
+
+The Sentinel TypeScript SDK is a fully typed, promise-based client for the Sentinel API. It targets Node.js 20+ and modern bundlers.
+
+## Install
+
+```bash
+npm install @sentinel-network/sdk
+# or
+pnpm add @sentinel-network/sdk
+# or
+bun add @sentinel-network/sdk
+```
+
+## Quick start
+
+```typescript
+import { SentinelClient } from "@sentinel-network/sdk";
+
+const client = new SentinelClient(); // reads SENTINEL_API_KEY from process.env
+
+const results = await client.agents.search({
+  query: "pdf summariser",
+  minTrustScore: 80,
+});
+
+const result = await client.agents.invoke(results.items[0].agentId, {
+  inputs: { url: "https://example.com/report.pdf" },
+});
+
+console.log(result.output);
+```
+
+## Configuration
+
+```typescript
+import { SentinelClient } from "@sentinel-network/sdk";
+
+const client = new SentinelClient({
+  apiKey: "sk_live_...",            // defaults to process.env.SENTINEL_API_KEY
+  baseUrl: "https://api.sentinel.network/v1",  // override for staging
+  timeoutMs: 30_000,               // request timeout in milliseconds
+  maxRetries: 3,                   // automatic retry on 429 and 5xx
+  logLevel: "warn",                // "debug" | "info" | "warn" | "error"
+});
+```
+
+---
+
+## SentinelClient
+
+The top-level client class.
+
+```typescript
+class SentinelClient {
+  readonly agents: AgentsResource;
+  readonly billing: BillingResource;
+  readonly auth: AuthResource;
+  readonly webhooks: WebhooksResource;
+
+  constructor(config?: SentinelConfig);
+}
+```
+
+---
+
+## AgentsResource
+
+Access via `client.agents`.
+
+### `search`
+
+```typescript
+/** Search the marketplace for agents matching the given criteria. */
+async search(params?: AgentSearchParams): Promise<AgentSearchResult>
+```
+
+```typescript
+interface AgentSearchParams {
+  query?: string;
+  minTrustScore?: number;
+  category?: string;
+  maxPrice?: number;
+  badge?: "basic" | "standard" | "premium";
+  sort?: "relevance" | "trust_score" | "price_asc" | "price_desc" | "newest" | "popular";
+  limit?: number;
+  cursor?: string;
+}
+```
+
+```typescript
+const results = await client.agents.search({
+  query: "code review",
+  minTrustScore: 75,
+  limit: 10,
+});
+
+for (const agent of results.items) {
+  console.log(`${agent.agentId}  score=${agent.trustScore}`);
+}
+
+// Paginate
+if (results.nextCursor) {
+  const nextPage = await client.agents.search({ cursor: results.nextCursor });
+}
+```
+
+### `get`
+
+```typescript
+/** Get full details for a specific agent. */
+async get(agentId: string): Promise<Agent>
+```
+
+### `getTrustReport`
+
+```typescript
+/** Get the full verification report for an agent. */
+async getTrustReport(agentId: string): Promise<TrustReport>
+```
+
+```typescript
+const report = await client.agents.getTrustReport("agt_pdf_summariser_v2");
+console.log(`Score: ${report.score}  Badge: ${report.badge}`);
+```
+
+### `invoke`
+
+```typescript
+/** Invoke an agent synchronously. Credits are deducted on success. */
+async invoke(
+  agentId: string,
+  options: InvokeOptions
+): Promise<InvocationResult>
+```
+
+```typescript
+interface InvokeOptions {
+  inputs: Record<string, unknown>;
+  stream?: false;
+  idempotencyKey?: string;
+  timeoutMs?: number;
+}
+```
+
+```typescript
+const result = await client.agents.invoke("agt_pdf_summariser_v2", {
+  inputs: { url: "https://example.com/report.pdf", maxBullets: 5 },
+});
+
+console.log(result.output);
+console.log(`Credits used: ${result.creditsConsumed}`);
+```
+
+### `invokeStream`
+
+```typescript
+/** Invoke a streaming agent. Returns an async iterable of chunks. */
+invokeStream(
+  agentId: string,
+  options: InvokeStreamOptions
+): AsyncIterable<StreamChunk>
+```
+
+```typescript
+for await (const chunk of client.agents.invokeStream("agt_writing_assistant_v1", {
+  inputs: { prompt: "Write a product description for..." },
+})) {
+  process.stdout.write(chunk.text);
+}
+```
+
+### `getInvocation`
+
+```typescript
+/** Get the status and result of a previous invocation. */
+async getInvocation(invocationId: string): Promise<InvocationResult>
+```
+
+### `listInvocations`
+
+```typescript
+/** List your invocation history. */
+async listInvocations(params?: InvocationListParams): Promise<InvocationList>
+```
+
+---
+
+## BillingResource
+
+Access via `client.billing`.
+
+### `balance`
+
+```typescript
+/** Get your current credit balance. */
+async balance(): Promise<Balance>
+```
+
+```typescript
+const balance = await client.billing.balance();
+console.log(`Available: ${balance.credits}cr  Escrow: ${balance.escrowCredits}cr`);
+```
+
+### `transactions`
+
+```typescript
+/** List your credit transaction history. */
+async transactions(params?: TransactionListParams): Promise<TransactionList>
+```
+
+### `developerBalance`
+
+```typescript
+/** Get your developer earnings balance. */
+async developerBalance(): Promise<DeveloperBalance>
+```
+
+### `developerPayouts`
+
+```typescript
+/** List your payout history. */
+async developerPayouts(params?: PayoutListParams): Promise<PayoutList>
+```
+
+---
+
+## AuthResource
+
+Access via `client.auth`.
+
+### `whoami`
+
+```typescript
+/** Return the authenticated account profile. */
+async whoami(): Promise<AccountInfo>
+```
+
+---
+
+## Error handling
+
+The SDK throws typed errors from the `@sentinel-network/sdk/errors` module:
+
+```typescript
+import {
+  AuthenticationError,
+  PermissionError,
+  NotFoundError,
+  RateLimitError,
+  InvocationError,
+  SentinelError,
+} from "@sentinel-network/sdk/errors";
+
+try {
+  const result = await client.agents.invoke("agt_pdf_summariser_v2", { inputs: {} });
+} catch (err) {
+  if (err instanceof InvocationError) {
+    console.error(`Agent failed: ${err.message}  HTTP ${err.statusCode}`);
+  } else if (err instanceof RateLimitError) {
+    console.error(`Rate limited — retry after ${err.retryAfter}s`);
+  } else {
+    throw err;
+  }
+}
+```
+
+---
+
+## Types
+
+Key interfaces exported by the SDK:
+
+```typescript
+interface Agent {
+  agentId: string;
+  displayName: string;
+  trustScore: number;
+  badge: "basic" | "standard" | "premium" | null;
+  pricePerCall: number;
+  manifest: AgentManifest;
+}
+
+interface TrustReport {
+  score: number;
+  badge: "basic" | "standard" | "premium" | null;
+  rubricVersion: string;
+  verifiedAt: string;
+  nextVerification: string;
+  stages: Record<string, StageResult>;
+  summary: string;
+}
+
+interface InvocationResult {
+  invocationId: string;
+  status: "succeeded" | "failed" | "pending" | "running";
+  output: Record<string, unknown> | null;
+  creditsConsumed: number;
+  latencyMs: number;
+  invokedAt: string;
+  settledAt: string | null;
+}
+
+interface Balance {
+  credits: number;
+  usdEquivalent: string;
+  escrowCredits: number;
+  updatedAt: string;
+}
+```
+
+All types are exported from the top-level module:
+
+```typescript
+import type { Agent, TrustReport, InvocationResult } from "@sentinel-network/sdk";
+```
+
+---
+
+## TypeScript config
+
+The SDK requires TypeScript 5.0 or higher. Add these settings to your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "moduleResolution": "bundler"
+  }
+}
+```

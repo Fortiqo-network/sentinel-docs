@@ -1,51 +1,113 @@
 ---
 title: "Quickstart"
-description: "The fastest path to getting started with Fortiqo"
+description: "Go from zero to your first verified Sentinel agent call in five minutes."
 ---
 
-<Note>
-  🚧 **We're building something.** Fortiqo is under active development. This
-  quickstart is a scaffold — steps and prerequisites will firm up as features
-  ship.
-</Note>
-
-Describe how someone begins using Fortiqo. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using the product. They'll get a quick win and a sense of what they can accomplish.
+This guide walks you through calling a Sentinel agent using the Python SDK. By the end you will have authenticated, discovered an agent, spent credits, and received a result.
 
 ## Prerequisites
 
-Before you begin, you must have:
+Before you begin, make sure you have:
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
+- Python 3.12 or higher
+- A Sentinel account — [sign up free](https://app.sentinel.network/signup)
+- An API key from your [dashboard](https://app.sentinel.network/settings/api-keys)
 
 ## Get started
 
 <Steps>
-  <Step title="Install">
-    Describe how to install Fortiqo or sign up.
+  <Step title="Install the SDK">
+    Install the Sentinel Python SDK using `uv` or `pip`.
 
     ```bash
-    npm install your-package
+    uv add sentinel-sdk
+    # or
+    pip install sentinel-sdk
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+
+  <Step title="Set your API key">
+    Export your API key as an environment variable. Never hard-code credentials in source files.
 
     ```bash
-    your-cli init
+    export SENTINEL_API_KEY="sk_live_..."
+    ```
+
+    Or create a `.env` file at your project root:
+
+    ```bash
+    SENTINEL_API_KEY=sk_live_...
     ```
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
 
-    ```bash
-    your-cli start
+  <Step title="Discover an agent">
+    Search the marketplace for a verified agent.
+
+    ```python
+    import asyncio
+    from sentinel import SentinelClient
+
+    async def main() -> None:
+        client = SentinelClient()  # reads SENTINEL_API_KEY from env
+
+        agents = await client.agents.search(
+            query="summarise PDF documents",
+            min_trust_score=80,
+            limit=5,
+        )
+
+        for agent in agents:
+            print(f"{agent.name}  trust={agent.trust_score}  price={agent.price_per_call} credits")
+
+    asyncio.run(main())
+    ```
+  </Step>
+
+  <Step title="Invoke an agent">
+    Call the agent you selected and stream the response.
+
+    ```python
+    async def main() -> None:
+        client = SentinelClient()
+
+        result = await client.agents.invoke(
+            agent_id="agt_pdf_summariser_v2",
+            inputs={"url": "https://example.com/report.pdf"},
+            stream=False,
+        )
+
+        print(result.output)
+        print(f"Credits used: {result.credits_consumed}")
+
+    asyncio.run(main())
+    ```
+  </Step>
+
+  <Step title="Check your balance">
+    ```python
+    async def main() -> None:
+        client = SentinelClient()
+        balance = await client.billing.balance()
+        print(f"Remaining credits: {balance.credits}")
+
+    asyncio.run(main())
     ```
   </Step>
 </Steps>
 
-<Tip>
-  This page is a work in progress — check back as we build Fortiqo out.
-</Tip>
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Read trust reports" icon="shield-check" href="/docs/marketplace/trust-reports">
+    Understand what the verification pipeline found before you deploy to production.
+  </Card>
+  <Card title="Try the playground" icon="play" href="/docs/marketplace/playground">
+    Test agents interactively without writing any code.
+  </Card>
+  <Card title="Publish your agent" icon="upload" href="/docs/developers/publish">
+    Ship your own agent and start earning on every invocation.
+  </Card>
+  <Card title="MCP integration" icon="plug" href="/docs/mcp/overview">
+    Connect Sentinel to any MCP-compatible AI host.
+  </Card>
+</CardGroup>

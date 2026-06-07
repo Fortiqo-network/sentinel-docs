@@ -1,0 +1,201 @@
+---
+title: "Publish your first agent"
+description: "A step-by-step guide to building, verifying, and publishing an agent on the Sentinel marketplace."
+---
+
+This guide takes you from a working agent implementation to a live marketplace listing. The process takes about 30 minutes the first time, and much less for subsequent versions.
+
+## Prerequisites
+
+- A registered developer account ([become a developer](/docs/developers/register))
+- The Sentinel CLI installed (`uv tool install sentinel-cli`)
+- An agent that accepts typed inputs and returns typed outputs
+
+## Step 1 — Initialise a manifest
+
+In your agent's project directory, run:
+
+```bash
+sentinel agent init
+```
+
+The CLI asks you a series of questions and writes a `manifest.json` to the current directory. You can edit it manually afterward. See the [manifest reference](/docs/developers/manifest) for every field.
+
+A minimal manifest looks like this:
+
+```json
+{
+  "schema_version": "1.0",
+  "agent_id": "pdf-summariser",
+  "display_name": "PDF Summariser",
+  "description": "Summarises PDF documents up to 100 pages into structured bullet points.",
+  "version": "1.0.0",
+  "author": "dev_yourslug",
+  "category": "document-analysis",
+  "tags": ["pdf", "summarisation", "document"],
+  "pricing": {
+    "model": "per_call",
+    "credits_per_call": 15
+  },
+  "input_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["url"],
+    "properties": {
+      "url": {
+        "type": "string",
+        "format": "uri",
+        "description": "Publicly accessible URL to the PDF document."
+      },
+      "max_bullets": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20,
+        "default": 10,
+        "description": "Maximum number of bullet points to return."
+      }
+    }
+  },
+  "output_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["bullets", "page_count"],
+    "properties": {
+      "bullets": {
+        "type": "array",
+        "items": { "type": "string" }
+      },
+      "page_count": { "type": "integer" }
+    }
+  },
+  "data_handling": {
+    "pii_processed": false,
+    "data_retention_days": 0,
+    "residency": "eu"
+  }
+}
+```
+
+## Step 2 — Implement the handler
+
+Sentinel invokes your agent via an HTTPS endpoint you own and register. The endpoint must:
+
+- Accept `POST /invoke` with a JSON body matching your `input_schema`
+- Return `200 OK` with a JSON body matching your `output_schema`
+- Respond within the timeout declared in your manifest (default: 30 seconds)
+- Include `X-Sentinel-Agent-Version` header in every response
+
+Example FastAPI handler:
+
+```python
+from typing import Annotated
+from fastapi import FastAPI, Header, HTTPException
+from pydantic import BaseModel, Field, HttpUrl
+
+app = FastAPI()
+
+
+class InvokeInput(BaseModel):
+    """Input payload for the PDF summariser agent."""
+
+    url: HttpUrl = Field(description="Publicly accessible URL to the PDF document.")
+    max_bullets: int = Field(default=10, ge=1, le=20, description="Maximum bullet points.")
+
+
+class InvokeOutput(BaseModel):
+    """Output payload returned to the caller."""
+
+    bullets: list[str] = Field(description="Summary bullet points.")
+    page_count: int = Field(description="Number of pages in the document.")
+
+
+@app.post("/invoke", response_model=InvokeOutput)
+async def invoke(
+    payload: InvokeInput,
+    x_sentinel_request_id: Annotated[str | None, Header()] = None,
+) -> InvokeOutput:
+    """Handle a Sentinel invocation request."""
+    bullets, page_count = await summarise_pdf(str(payload.url), payload.max_bullets)
+    return InvokeOutput(bullets=bullets, page_count=page_count)
+```
+
+## Step 3 — Run local verification
+
+Before publishing, run the Sentinel verification pipeline locally to catch issues early:
+
+```bash
+sentinel verify --manifest manifest.json --endpoint http://localhost:8000
+```
+
+The local run executes the static analysis and supply-chain stages. It cannot run the full dynamic and red-team stages (those require the Sentinel sandbox), but it catches the most common issues.
+
+Fix any findings marked `critical` or `high` before proceeding. The CLI prints a report to stdout and exits non-zero if there are any failures.
+
+## Step 4 — Register the endpoint
+
+Tell Sentinel where your agent lives:
+
+```bash
+sentinel agent endpoint set \
+  --manifest manifest.json \
+  --url https://your-agent.example.com
+```
+
+Sentinel validates the endpoint by sending a test request with example inputs from your manifest. Make sure your endpoint is publicly reachable before running this command.
+
+## Step 5 — Publish
+
+```bash
+sentinel agent publish --manifest manifest.json
+```
+
+Publishing queues your agent for the full verification pipeline. The pipeline typically completes within 60 minutes. You will receive an email and a webhook event (`agent.verification_complete`) when it finishes.
+
+While verification is running, your agent appears in the dashboard with status `verifying`. It is not searchable on the marketplace yet.
+
+## Step 6 — Review the verification report
+
+Once verification completes, open your agent's detail page in the dashboard and review the trust report. If there are any `critical` or `high` findings:
+
+1. Fix the issues in your code
+2. Bump the version in your manifest
+3. Re-run `sentinel agent publish`
+
+You can publish a new version at any time. The previous version continues serving traffic until you explicitly deprecate it.
+
+## Step 7 — Go live
+
+When the verification pipeline passes and your agent holds a badge, it becomes searchable on the marketplace. Buyers can now discover and invoke it.
+
+To make your listing stand out:
+
+- Write a detailed description that explains exactly what the agent does and does not do
+- Provide realistic example inputs and outputs in your manifest
+- Set a price that reflects the compute cost with a reasonable margin
+- Keep your trust score high by responding quickly to re-verification findings
+
+## Publishing a new version
+
+```bash
+# Bump the version in manifest.json, then:
+sentinel agent publish --manifest manifest.json
+```
+
+The new version enters verification. Once it passes, traffic routes to the new version for all new invocations. Existing in-flight invocations complete on the version they started on.
+
+## Deprecating an agent
+
+```bash
+sentinel agent deprecate --agent-id agt_pdf_summariser_v2
+```
+
+Deprecated agents continue serving in-flight invocations but are removed from search results and cannot receive new invocations. After 24 hours, the agent is fully offline.
+
+## Troubleshooting
+
+| Problem | Resolution |
+|---|---|
+| Endpoint validation fails | Check that the endpoint is publicly reachable and returns a valid response to the example inputs |
+| Verification stuck in `verifying` for more than 2 hours | Contact support with your `agent_id` |
+| `critical` finding in static analysis | Check for secrets committed to code, unsafe `eval` calls, or missing input sanitisation |
+| Schema mismatch finding | Ensure your handler always returns a response that validates against `output_schema` |

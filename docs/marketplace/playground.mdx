@@ -1,0 +1,90 @@
+---
+title: "Playground"
+description: "Invoke and inspect any Sentinel agent interactively — no code required."
+---
+
+The Sentinel playground lets you test any marketplace agent directly from your browser. You can explore the input schema, submit a call, inspect the output, and read the trust report — all without writing a single line of code.
+
+## Open the playground
+
+1. Go to [app.sentinel.network/marketplace](https://app.sentinel.network/marketplace).
+2. Open any agent detail page.
+3. Click **Open in playground**.
+
+Or navigate directly: `https://app.sentinel.network/playground/{agent_id}`.
+
+## Fill in inputs
+
+The playground reads the agent's input schema from its manifest and renders a form automatically. Each field shows:
+
+- The field name and type
+- A description from the schema
+- Whether the field is required
+- An example value (if the developer provided one)
+
+For complex nested objects, the form renders as collapsible sections. For file inputs, you can upload from your local machine or provide a URL.
+
+<Tip>
+  Click **Load example** to pre-fill all fields with the agent's declared example inputs. This is the fastest way to see a working call.
+</Tip>
+
+## Run a call
+
+Click **Run** to invoke the agent. The playground shows:
+
+- **Status indicator** — `pending`, `running`, `succeeded`, or `failed`
+- **Output panel** — rendered JSON response that matches the agent's output schema
+- **Credits consumed** — deducted from your account balance on success
+- **Latency** — wall-clock time for the call
+- **Invocation ID** — use this to look up the call in your billing history
+
+If the call fails, the playground shows the error message and HTTP status code from the agent.
+
+## Streaming outputs
+
+If the agent declares `streaming: true` in its manifest, the playground renders output tokens incrementally as they arrive, the same way a chat interface does.
+
+## Inspect the trust report
+
+While on the playground page, the sidebar shows a summary of the agent's trust report:
+
+- Current score and badge
+- Stage breakdown (static, supply-chain, dynamic, red-team)
+- Open findings with severity
+- Date of last verification
+
+Click **Full report** to open the detailed trust report page.
+
+## Sharing a playground session
+
+The URL updates as you fill in inputs, so you can share a pre-filled playground link with a colleague:
+
+```
+https://app.sentinel.network/playground/agt_pdf_summariser_v2?inputs=eyJ1cmwiOiJodHRwczovL2V4YW1wbGUuY29tL3JlcG9ydC5wZGYifQ==
+```
+
+The `inputs` parameter is Base64-encoded JSON matching the agent's input schema.
+
+## Billing in the playground
+
+Playground calls are real invocations. Credits are deducted from your account balance exactly as they would be from a programmatic call. There is no sandbox mode — if you want to test without spending production credits, use the `sk_test_` API key and the agent must be registered in the test environment.
+
+<Warning>
+  The playground uses production credits by default. Switch to a test API key in **Settings → API keys** if you want free test invocations against agents that support the sandbox environment.
+</Warning>
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl + Enter` | Run the call |
+| `Ctrl + L` | Load example inputs |
+| `Ctrl + Shift + C` | Copy output as JSON |
+| `Escape` | Cancel a running call |
+
+## Limitations
+
+- Maximum input payload: 10 MB
+- Maximum output rendered inline: 1 MB (larger outputs are linked as a downloadable file)
+- Concurrent calls from the playground: 1 per browser tab
+- File upload via the form: up to 25 MB per file

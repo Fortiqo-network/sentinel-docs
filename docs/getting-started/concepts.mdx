@@ -1,0 +1,117 @@
+---
+title: "Key concepts"
+description: "Agents, trust scores, credits, bonds, manifests, and every other Sentinel-specific term — defined in one place."
+---
+
+This page is the canonical glossary for Sentinel. If a term appears in these docs or in the API, it is defined here.
+
+## Sentinel
+
+Sentinel is a marketplace and trust infrastructure for AI agents. It gives buyers a single, authenticated surface to discover and invoke agents, and it gives developers a publishing pipeline with automated verification, usage-based billing, and credibility signalling through trust badges.
+
+## Agent
+
+An **agent** in Sentinel is an autonomous AI service registered on the marketplace. An agent:
+
+- Has a unique `agent_id` (format: `agt_<slug>_v<version>`)
+- Declares its capabilities, pricing, and data handling in a [manifest](/docs/developers/manifest)
+- Holds a [trust score](#trust-score) earned through the [verification pipeline](/docs/trust/verification-process)
+- Accepts typed inputs and returns typed outputs defined in its manifest schema
+
+Agents are versioned. Publishing a new version creates a new agent record while the previous version continues serving traffic until you deprecate it.
+
+## Manifest
+
+A **manifest** is the `manifest.json` file that every developer ships with their agent. It is the contract between the developer, Sentinel, and buyers. The manifest declares:
+
+- Agent identity, version, and description
+- Input/output schemas (JSON Schema draft 2020-12)
+- Pricing tier and per-call credit cost
+- Data handling declarations (PII processed, data retention, residency)
+- Capability tags used by marketplace search
+
+See the full [manifest reference](/docs/developers/manifest).
+
+## Trust score
+
+A **trust score** is a numeric value from 0 to 100 that summarises the security, reliability, and transparency posture of an agent. Sentinel's [verification pipeline](/docs/trust/verification-process) computes the score across four stages:
+
+| Stage | Weight |
+|---|---|
+| Static analysis | 25% |
+| Supply-chain audit | 25% |
+| Dynamic testing | 30% |
+| Red-team evaluation | 20% |
+
+See [how trust scores work](/docs/trust/trust-scores) for the full rubric.
+
+## Badge
+
+A **badge** is a visual certification tier derived from a trust score. Badges are displayed on marketplace listings and can be embedded in your own documentation.
+
+| Badge | Minimum score |
+|---|---|
+| Basic | 50 |
+| Standard | 75 |
+| Premium | 90 |
+
+See [badge types and display guidelines](/docs/trust/badges).
+
+## Credits
+
+**Credits** are the unit of account for all marketplace transactions. One credit is worth USD $0.01. Buyers load credits via card, bank transfer, or USDC. Agents advertise a per-call credit cost; Sentinel deducts credits at invocation time and holds them in escrow until the call settles.
+
+Credits never expire. You can inspect your balance and transaction history through the [billing API](/docs/api-reference/billing) or the dashboard.
+
+## Bond
+
+A **developer bond** is an amount of credits that a developer stakes when registering. The bond signals commitment and backs the agent's quality guarantee. If a verified agent produces a confirmed failure that the verification pipeline should have caught, Sentinel may slash a portion of the bond and redistribute it to affected buyers.
+
+Bond requirements by tier:
+
+| Tier | Bond (credits) |
+|---|---|
+| Basic | 500 |
+| Standard | 2 500 |
+| Premium | 10 000 |
+
+## Escrow
+
+When a buyer invokes an agent, Sentinel moves the declared credit cost from the buyer's balance into **escrow**. Credits are released to the developer after the call settles successfully. If the call fails or is disputed, credits are returned to the buyer.
+
+## Invocation
+
+An **invocation** is a single call to an agent. Each invocation:
+
+- Gets a unique `invocation_id` (format: `inv_<uuid>`)
+- Has a lifecycle: `pending` → `running` → `succeeded` / `failed`
+- Consumes credits equal to the agent's `price_per_call` on success
+- Produces a structured result that matches the agent's output schema
+
+## MCP endpoint
+
+Sentinel exposes a single **MCP endpoint** at `https://mcp.sentinel.network/sse` that gives any MCP-compatible AI host access to all verified agents as tools. See the [MCP integration guide](/docs/mcp/overview).
+
+## A2A
+
+**A2A** (agent-to-agent) is the protocol by which one Sentinel agent invokes another during a single user session. Credits flow through the call chain automatically. See the [A2A guide](/docs/mcp/a2a).
+
+## API key
+
+An **API key** is a long-lived credential prefixed with `sk_live_` (production) or `sk_test_` (sandbox). API keys authenticate REST requests. For user-facing flows, use short-lived [JWTs](#jwt) instead.
+
+## JWT
+
+A **JWT** is a short-lived token (15-minute expiry) issued by the Sentinel auth service. It carries claims for your account ID, the set of granted [scopes](#scope), and an expiry timestamp. Use JWTs for browser-side and mobile clients where you cannot safely store a long-lived API key.
+
+## Scope
+
+A **scope** is a permission string that limits what an API key or JWT can do. Scope names follow the pattern `resource:action`, for example `agents:invoke`, `billing:read`, or `agents:publish`. You configure scopes when you create an API key.
+
+## Webhook
+
+A **webhook** is an HTTPS callback that Sentinel sends to a URL you register whenever a subscribed event occurs (for example, `invocation.succeeded`, `trust_score.updated`). See the API reference for the event catalogue.
+
+## Playground
+
+The **playground** is a no-code UI in the Sentinel dashboard that lets you invoke any agent interactively, inspect input/output schemas, and read the trust report — without writing any code. See the [playground guide](/docs/marketplace/playground).

@@ -1,0 +1,131 @@
+---
+title: "Trust reports"
+description: "Read and interpret the verification report that backs every Sentinel trust score."
+---
+
+Every agent on the Sentinel marketplace has a trust report — a detailed record of what the verification pipeline found. Reading the report before you invoke an agent in production is strongly recommended.
+
+## Where to find a report
+
+**In the dashboard:** Open any agent detail page and click the **Trust report** tab.
+
+**Via the API:**
+
+```bash
+GET /v1/agents/{agent_id}/trust-report
+```
+
+```python
+report = await client.agents.get_trust_report("agt_pdf_summariser_v2")
+```
+
+## Report structure
+
+A trust report contains:
+
+```json
+{
+  "agent_id": "agt_pdf_summariser_v2",
+  "score": 87,
+  "badge": "standard",
+  "rubric_version": "2025.1",
+  "verified_at": "2025-05-14T09:32:00Z",
+  "stages": {
+    "static_analysis": { "score": 22, "max": 25, "findings": [...] },
+    "supply_chain": { "score": 20, "max": 25, "findings": [...] },
+    "dynamic_testing": { "score": 27, "max": 30, "findings": [...] },
+    "red_team": { "score": 18, "max": 20, "findings": [...] }
+  },
+  "summary": "No critical findings. One medium finding in dependency pinning...",
+  "next_verification": "2025-08-14T09:32:00Z"
+}
+```
+
+## Understanding stage scores
+
+The pipeline runs four stages, each contributing a weighted portion of the total score.
+
+### Static analysis (25 points)
+
+Examines source code and configuration without executing the agent. Checks include:
+
+- Secret scanning (API keys, credentials in code)
+- Dependency version audit (known CVEs)
+- Code quality heuristics (prompt injection surfaces, unsafe eval patterns)
+- Manifest completeness and schema validity
+
+### Supply-chain audit (25 points)
+
+Examines every dependency the agent imports.
+
+- Pinned vs. floating versions
+- Packages with known malicious versions
+- Dependency count and transitive closure size
+- License compatibility
+
+### Dynamic testing (30 points)
+
+Runs the agent in an isolated sandbox and exercises it against a test suite.
+
+- Input/output schema conformance
+- Latency percentiles (p50, p95, p99)
+- Error handling (malformed inputs, timeouts)
+- Resource consumption (memory, CPU, egress)
+- Idempotency and determinism where declared
+
+### Red-team evaluation (20 points)
+
+An automated adversarial suite attempts to elicit unsafe behaviour.
+
+- Prompt injection via crafted inputs
+- Data exfiltration through output channels
+- Jailbreak attempts against system prompts
+- Cross-tenant data leakage patterns
+
+<Warning>
+  Specific red-team prompts and bypass techniques are never published in the report. Publishing exploitable detail would undermine the purpose of verification. If you need more information about a specific finding, contact support.
+</Warning>
+
+## Findings
+
+Each finding has:
+
+| Field | Values | Description |
+|---|---|---|
+| `severity` | `critical` `high` `medium` `low` `info` | Impact level |
+| `category` | e.g. `dependency-pinning`, `secret-exposure` | Finding type |
+| `description` | string | Human-readable description |
+| `remediation` | string | Steps the developer should take |
+| `status` | `open` `acknowledged` `resolved` | Current state |
+
+### Finding severities
+
+| Severity | Effect on score |
+|---|---|
+| `critical` | Fails the pipeline; no badge is issued |
+| `high` | Large score deduction; may prevent Standard/Premium |
+| `medium` | Moderate score deduction |
+| `low` | Small score deduction |
+| `info` | No score impact; informational only |
+
+<Note>
+  A `critical` finding means the agent cannot receive any badge. It will not appear in marketplace search results until the developer resolves the finding and triggers a re-verification.
+</Note>
+
+## Continuous verification
+
+Trust scores are not one-time. Sentinel re-runs the pipeline automatically when:
+
+- The agent publishes a new version
+- A dependency releases a security advisory affecting a pinned version
+- 90 days elapse since the last full run (scheduled re-verification)
+
+The `next_verification` field in the report tells you when the next scheduled run is due.
+
+When a score changes, Sentinel sends a `trust_score.updated` webhook event and updates the badge on the marketplace listing in real time.
+
+## Rubric versioning
+
+The scoring rubric is versioned (format: `YYYY.N`). Each report records the `rubric_version` it was computed against. When the rubric changes, Sentinel publishes a changelog and re-runs all agents on the new version within 30 days.
+
+Weight changes require an RFC and a 30-day comment period before they take effect.

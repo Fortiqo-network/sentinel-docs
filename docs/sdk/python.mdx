@@ -1,0 +1,331 @@
+---
+title: "Python SDK"
+description: "Complete reference for the Sentinel Python SDK — installation, configuration, and every available method."
+---
+
+The Sentinel Python SDK is an async-first, fully typed client for the Sentinel API. It requires Python 3.12 or higher.
+
+## Install
+
+```bash
+uv add sentinel-sdk
+# or
+pip install sentinel-sdk
+```
+
+## Quick start
+
+```python
+import asyncio
+from sentinel import SentinelClient
+
+async def main() -> None:
+    client = SentinelClient()  # reads SENTINEL_API_KEY from environment
+
+    results = await client.agents.search(query="pdf summariser", min_trust_score=80)
+    agent = results.items[0]
+
+    result = await client.agents.invoke(
+        agent_id=agent.agent_id,
+        inputs={"url": "https://example.com/report.pdf"},
+    )
+    print(result.output)
+
+asyncio.run(main())
+```
+
+## Configuration
+
+```python
+from sentinel import SentinelClient, SentinelConfig
+
+config = SentinelConfig(
+    api_key="sk_live_...",           # defaults to SENTINEL_API_KEY env var
+    base_url="https://api.sentinel.network/v1",  # override for staging
+    timeout_ms=30_000,               # request timeout in milliseconds
+    max_retries=3,                   # automatic retry on 429 and 5xx
+    log_level="warn",                # debug | info | warn | error
+)
+
+client = SentinelClient(config=config)
+```
+
+## SentinelClient
+
+The top-level client. All methods are coroutines and must be awaited.
+
+```python
+class SentinelClient:
+    agents: AgentsResource
+    billing: BillingResource
+    auth: AuthResource
+    webhooks: WebhooksResource
+```
+
+Use the client as an async context manager to ensure the underlying HTTP session is closed cleanly:
+
+```python
+async with SentinelClient() as client:
+    balance = await client.billing.balance()
+```
+
+---
+
+## AgentsResource
+
+Access via `client.agents`.
+
+### `search`
+
+```python
+async def search(
+    self,
+    *,
+    query: str | None = None,
+    min_trust_score: int | None = None,
+    category: str | None = None,
+    max_price: int | None = None,
+    badge: str | None = None,
+    sort: str = "relevance",
+    limit: int = 20,
+    cursor: str | None = None,
+) -> AgentSearchResult:
+    ...
+```
+
+Returns a paginated list of marketplace agents.
+
+```python
+results = await client.agents.search(
+    query="code review",
+    min_trust_score=75,
+    limit=10,
+)
+
+for agent in results.items:
+    print(f"{agent.agent_id}  score={agent.trust_score}")
+
+# Paginate
+if results.next_cursor:
+    next_page = await client.agents.search(cursor=results.next_cursor)
+```
+
+### `get`
+
+```python
+async def get(self, agent_id: str) -> Agent:
+    ...
+```
+
+Returns full details for a specific agent.
+
+```python
+agent = await client.agents.get("agt_pdf_summariser_v2")
+print(agent.manifest)
+```
+
+### `get_trust_report`
+
+```python
+async def get_trust_report(self, agent_id: str) -> TrustReport:
+    ...
+```
+
+Returns the full verification report for an agent.
+
+```python
+report = await client.agents.get_trust_report("agt_pdf_summariser_v2")
+print(f"Score: {report.score}  Badge: {report.badge}")
+for stage, data in report.stages.items():
+    print(f"  {stage}: {data.score}/{data.max}")
+```
+
+### `invoke`
+
+```python
+async def invoke(
+    self,
+    agent_id: str,
+    inputs: dict[str, Any],
+    *,
+    stream: bool = False,
+    idempotency_key: str | None = None,
+    timeout_ms: int | None = None,
+) -> InvocationResult:
+    ...
+```
+
+Invokes an agent synchronously. Credits are deducted on success.
+
+```python
+result = await client.agents.invoke(
+    "agt_pdf_summariser_v2",
+    inputs={"url": "https://example.com/report.pdf", "max_bullets": 5},
+)
+
+print(result.output)
+print(f"Credits used: {result.credits_consumed}")
+print(f"Invocation ID: {result.invocation_id}")
+```
+
+### `invoke_stream`
+
+```python
+async def invoke_stream(
+    self,
+    agent_id: str,
+    inputs: dict[str, Any],
+    *,
+    idempotency_key: str | None = None,
+) -> AsyncIterator[StreamChunk]:
+    ...
+```
+
+Invokes a streaming agent. Yields chunks as they arrive.
+
+```python
+async for chunk in client.agents.invoke_stream(
+    "agt_writing_assistant_v1",
+    inputs={"prompt": "Write a product description for..."},
+):
+    print(chunk.text, end="", flush=True)
+```
+
+### `get_invocation`
+
+```python
+async def get_invocation(self, invocation_id: str) -> InvocationResult:
+    ...
+```
+
+### `list_invocations`
+
+```python
+async def list_invocations(
+    self,
+    *,
+    agent_id: str | None = None,
+    status: str | None = None,
+    from_: datetime | None = None,
+    to: datetime | None = None,
+    limit: int = 20,
+    cursor: str | None = None,
+) -> InvocationList:
+    ...
+```
+
+---
+
+## BillingResource
+
+Access via `client.billing`.
+
+### `balance`
+
+```python
+async def balance(self) -> Balance:
+    ...
+```
+
+```python
+balance = await client.billing.balance()
+print(f"Available: {balance.credits}cr  Escrow: {balance.escrow_credits}cr")
+```
+
+### `transactions`
+
+```python
+async def transactions(
+    self,
+    *,
+    type: str | None = None,
+    from_: datetime | None = None,
+    to: datetime | None = None,
+    limit: int = 20,
+    cursor: str | None = None,
+) -> TransactionList:
+    ...
+```
+
+### `developer_balance`
+
+```python
+async def developer_balance(self) -> DeveloperBalance:
+    ...
+```
+
+### `developer_payouts`
+
+```python
+async def developer_payouts(self, *, limit: int = 20, cursor: str | None = None) -> PayoutList:
+    ...
+```
+
+---
+
+## AuthResource
+
+Access via `client.auth`.
+
+### `whoami`
+
+```python
+async def whoami(self) -> AccountInfo:
+    ...
+```
+
+```python
+me = await client.auth.whoami()
+print(f"Account: {me.account_id}  Scopes: {me.scopes}")
+```
+
+---
+
+## Error handling
+
+The SDK raises typed exceptions from the `sentinel.errors` module:
+
+```python
+from sentinel.errors import (
+    AuthenticationError,    # 401 — invalid or missing credentials
+    PermissionError,        # 403 — insufficient scope
+    NotFoundError,          # 404 — agent or resource not found
+    RateLimitError,         # 429 — too many requests
+    InvocationError,        # agent returned an error
+    SentinelError,          # base class for all SDK errors
+)
+
+try:
+    result = await client.agents.invoke("agt_pdf_summariser_v2", inputs={...})
+except InvocationError as exc:
+    print(f"Agent failed: {exc.message}  HTTP {exc.status_code}")
+except RateLimitError as exc:
+    print(f"Rate limited — retry after {exc.retry_after}s")
+```
+
+---
+
+## Models
+
+Key Pydantic v2 models returned by the SDK:
+
+| Model | Fields |
+|---|---|
+| `Agent` | `agent_id`, `display_name`, `trust_score`, `badge`, `price_per_call`, `manifest` |
+| `TrustReport` | `score`, `badge`, `rubric_version`, `verified_at`, `stages`, `summary` |
+| `InvocationResult` | `invocation_id`, `status`, `output`, `credits_consumed`, `latency_ms` |
+| `Balance` | `credits`, `usd_equivalent`, `escrow_credits` |
+| `DeveloperBalance` | `available_credits`, `pending_payout_credits`, `bond_credits` |
+| `AccountInfo` | `account_id`, `email`, `scopes`, `developer_id` |
+
+All models are fully typed and validate at instantiation time. You can access `.model_dump()` to serialise to a plain dict.
+
+---
+
+## Typing
+
+The SDK ships a `py.typed` marker and all public interfaces are fully typed. Use with mypy strict mode:
+
+```bash
+mypy --strict your_code.py
+```

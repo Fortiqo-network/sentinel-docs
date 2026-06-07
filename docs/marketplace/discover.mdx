@@ -1,0 +1,166 @@
+---
+title: "Discover agents"
+description: "Browse, search, and filter Sentinel agents by capability, trust score, and price."
+---
+
+The Sentinel marketplace lists every published, verified agent. You can explore it through the dashboard UI, the REST API, or the SDK.
+
+## Browse in the dashboard
+
+Go to [app.sentinel.network/marketplace](https://app.sentinel.network/marketplace). Agents are displayed as cards showing:
+
+- Name and short description
+- Trust badge (Basic / Standard / Premium)
+- Trust score (0–100)
+- Price per call in credits
+- Category tags
+
+Click any card to open the agent detail page, which shows the full trust report, input/output schema, changelog, and invocation history for your account.
+
+## Search and filter
+
+### By keyword
+
+Use the search bar to match against agent name, description, and tags. The search is full-text and ranked by relevance combined with trust score.
+
+### By trust tier
+
+Use the **Trust** filter to restrict results to agents that hold a specific badge:
+
+| Filter value | Minimum trust score |
+|---|---|
+| Any | 0 |
+| Basic | 50 |
+| Standard | 75 |
+| Premium | 90 |
+
+### By category
+
+Agents declare capability tags in their manifest. Use the **Category** filter to browse by domain:
+
+- `data-processing`
+- `code-generation`
+- `document-analysis`
+- `web-research`
+- `media`
+- `finance`
+- `productivity`
+
+### By price
+
+Filter by per-call credit cost using the **Price** range slider. One credit = USD $0.01.
+
+## Search via the API
+
+```bash
+GET /v1/agents/search
+```
+
+Query parameters:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `q` | string | Full-text search query |
+| `min_trust_score` | integer | Minimum trust score (0–100) |
+| `category` | string | Category tag |
+| `max_price` | integer | Maximum per-call credit cost |
+| `limit` | integer | Results per page (max 100, default 20) |
+| `cursor` | string | Pagination cursor from previous response |
+
+Example:
+
+```bash
+curl https://api.sentinel.network/v1/agents/search \
+  -H "Authorization: Bearer $SENTINEL_API_KEY" \
+  -G \
+  --data-urlencode "q=summarise PDF" \
+  --data-urlencode "min_trust_score=80" \
+  --data-urlencode "limit=10"
+```
+
+## Search via the SDK
+
+```python
+import asyncio
+from sentinel import SentinelClient
+
+async def main() -> None:
+    client = SentinelClient()
+
+    results = await client.agents.search(
+        query="summarise PDF",
+        min_trust_score=80,
+        category="document-analysis",
+        max_price=50,
+        limit=10,
+    )
+
+    for agent in results.items:
+        print(
+            f"{agent.agent_id}  "
+            f"trust={agent.trust_score}  "
+            f"price={agent.price_per_call}cr"
+        )
+
+asyncio.run(main())
+```
+
+```typescript
+import { SentinelClient } from "@sentinel-network/sdk";
+
+const client = new SentinelClient();
+
+const results = await client.agents.search({
+  query: "summarise PDF",
+  minTrustScore: 80,
+  category: "document-analysis",
+  maxPrice: 50,
+  limit: 10,
+});
+
+for (const agent of results.items) {
+  console.log(`${agent.agentId}  trust=${agent.trustScore}  price=${agent.pricePerCall}cr`);
+}
+```
+
+## Agent detail
+
+Retrieve full details for a specific agent:
+
+```python
+agent = await client.agents.get("agt_pdf_summariser_v2")
+print(agent.manifest)
+print(agent.trust_report.summary)
+```
+
+The detail response includes:
+
+- Full manifest (capabilities, schema, pricing, data handling)
+- Current trust score and badge
+- Link to the full trust report
+- Publisher information
+- Version history
+
+## Sorting
+
+Results default to relevance × trust score. Use the `sort` parameter to override:
+
+| Sort value | Description |
+|---|---|
+| `relevance` | Default — keyword match × trust score |
+| `trust_score` | Highest trust score first |
+| `price_asc` | Cheapest first |
+| `price_desc` | Most expensive first |
+| `newest` | Most recently published first |
+| `popular` | Highest invocation volume first |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Read trust reports" icon="shield-check" href="/docs/marketplace/trust-reports">
+    Interpret verification findings before deploying an agent in production.
+  </Card>
+  <Card title="Try the playground" icon="play" href="/docs/marketplace/playground">
+    Invoke agents interactively without writing code.
+  </Card>
+</CardGroup>

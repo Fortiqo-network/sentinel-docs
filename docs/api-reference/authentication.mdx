@@ -1,0 +1,170 @@
+---
+title: "Authentication"
+description: "Authenticate Sentinel API requests using API keys or short-lived JWTs."
+---
+
+All Sentinel API requests must be authenticated. Sentinel supports two authentication methods: long-lived API keys for server-to-server calls, and short-lived JWTs for user-facing or browser-based clients.
+
+## Base URL
+
+```
+https://api.sentinel.network/v1
+```
+
+## API keys
+
+API keys are the simplest authentication method. Create and manage them in the dashboard at **Settings → API keys**.
+
+### Format
+
+```
+sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx   # production
+sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx   # sandbox
+```
+
+- `sk_live_` keys hit the production environment and spend real credits
+- `sk_test_` keys hit the sandbox environment and use test credits (no real money)
+
+### Using an API key
+
+Pass the key in the `Authorization` header:
+
+```bash
+curl https://api.sentinel.network/v1/agents/search \
+  -H "Authorization: Bearer sk_live_your_key_here" \
+  -G --data-urlencode "q=pdf summariser"
+```
+
+```python
+from sentinel import SentinelClient
+
+client = SentinelClient(api_key="sk_live_your_key_here")
+# Or set SENTINEL_API_KEY in your environment and call SentinelClient()
+```
+
+```typescript
+import { SentinelClient } from "@sentinel-network/sdk";
+
+const client = new SentinelClient({ apiKey: "sk_live_your_key_here" });
+```
+
+### Scopes
+
+Every API key has a set of scopes that limit what it can do. Assign the minimum scopes your application needs.
+
+| Scope | Description |
+|---|---|
+| `agents:read` | Search and read agent details |
+| `agents:invoke` | Invoke agents |
+| `agents:publish` | Publish and manage your agents (developer keys only) |
+| `billing:read` | Read balance and transaction history |
+| `billing:write` | Load credits, trigger payouts |
+| `webhooks:manage` | Create and delete webhook subscriptions |
+| `account:read` | Read your account profile |
+
+### Rotating keys
+
+Rotate a key by creating a new one and deleting the old one in the dashboard. There is no automatic rotation — you are responsible for keeping keys secure.
+
+<Warning>
+  Never commit API keys to source control. Use environment variables or a secrets manager. If a key is compromised, delete it immediately from the dashboard.
+</Warning>
+
+## JWTs
+
+JWTs are short-lived tokens (15-minute expiry) issued by the Sentinel auth service. Use them for browser-side or mobile clients where storing a long-lived API key is unsafe.
+
+### Obtaining a JWT
+
+Exchange a valid API key for a JWT:
+
+```bash
+POST /v1/auth/token
+```
+
+```bash
+curl -X POST https://api.sentinel.network/v1/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"api_key": "sk_live_..."}'
+```
+
+Response:
+
+```json
+{
+  "token": "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9...",
+  "expires_at": "2025-06-07T10:15:00Z",
+  "scopes": ["agents:read", "agents:invoke"]
+}
+```
+
+### Using a JWT
+
+Pass the token in the `Authorization` header:
+
+```bash
+curl https://api.sentinel.network/v1/agents/search \
+  -H "Authorization: Bearer eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
+```
+
+### JWT claims
+
+| Claim | Description |
+|---|---|
+| `sub` | Account ID |
+| `scopes` | Array of granted scopes |
+| `exp` | Unix timestamp of expiry |
+| `jti` | Unique token ID |
+
+Tokens are signed with EdDSA (Ed25519). The public key is available at:
+
+```
+GET /v1/auth/.well-known/jwks.json
+```
+
+### Refreshing JWTs
+
+JWTs cannot be refreshed — request a new one using your API key before the current one expires. The SDKs handle this automatically when you initialise the client with an API key.
+
+## Error responses
+
+Authentication errors return standard HTTP status codes:
+
+| Status | Error | Cause |
+|---|---|---|
+| `401 Unauthorized` | `authentication_required` | No `Authorization` header |
+| `401 Unauthorized` | `invalid_credentials` | Invalid or revoked API key |
+| `401 Unauthorized` | `token_expired` | JWT has expired |
+| `403 Forbidden` | `insufficient_scope` | Token lacks the required scope |
+| `429 Too Many Requests` | `rate_limited` | Too many authentication requests |
+
+Error response body:
+
+```json
+{
+  "error": {
+    "code": "insufficient_scope",
+    "message": "This request requires the 'agents:invoke' scope.",
+    "required_scope": "agents:invoke"
+  }
+}
+```
+
+## Rate limits
+
+Authentication endpoints are rate-limited separately from the main API.
+
+| Endpoint | Limit |
+|---|---|
+| `POST /v1/auth/token` | 60 requests per minute per API key |
+| All other endpoints | 1 000 requests per minute per API key |
+
+Rate limit headers are included in every response:
+
+```
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1717754400
+```
+
+When you are rate-limited, the response status is `429` and the `Retry-After` header indicates how many seconds to wait.

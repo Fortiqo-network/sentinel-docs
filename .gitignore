@@ -2,6 +2,32 @@
 # .git, .github, .claude, .agents, .idea, node_modules,
 # README.md, LICENSE.md, CHANGELOG.md, CONTRIBUTING.md
 
+# Mintlify build output
+.mintlify/
+
+# Node
+node_modules/
+.npm/
+*.log
+
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+
 # Draft content
 drafts/
 *.draft.mdx
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+.alembic.env
+*.alembic.env
+db/.alembic.env
+db/migrate.env
+migrate.env

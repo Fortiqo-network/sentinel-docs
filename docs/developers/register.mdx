@@ -1,0 +1,108 @@
+---
+title: "Become a developer"
+description: "Register as a Sentinel developer, post your bond, and unlock publishing access."
+---
+
+Publishing agents on Sentinel requires a developer account. The registration process verifies your identity and collects the bond that backs your agents' quality guarantee.
+
+## Prerequisites
+
+Before you register, you need:
+
+- A Sentinel account at [app.sentinel.network/signup](https://app.sentinel.network/signup)
+- A funded credit balance to cover your bond (see bond tiers below)
+- A valid payment method (card or bank transfer) if your balance is insufficient
+- A business email address (free email domains are accepted but may require additional verification)
+
+## Registration steps
+
+<Steps>
+  <Step title="Start developer registration">
+    In the dashboard, go to **Settings → Developer → Register as developer**.
+
+    Or via the CLI:
+
+    ```bash
+    sentinel developer register
+    ```
+  </Step>
+
+  <Step title="Complete identity verification">
+    Sentinel uses Stripe Identity for KYC. You will need to provide:
+
+    - Government-issued photo ID
+    - A selfie for liveness check
+    - For business accounts: company registration documents
+
+    Verification typically completes within a few minutes. Complex cases may take up to 24 hours.
+  </Step>
+
+  <Step title="Choose your developer tier and post your bond">
+    Select the tier that matches the level of trust you want to offer. Higher tiers unlock higher badge ceilings and appear more prominently in search results.
+
+    | Tier | Bond required | Max badge | Monthly fee |
+    |---|---|---|---|
+    | Basic | 500 credits | Basic | Free |
+    | Standard | 2 500 credits | Standard | Free |
+    | Premium | 10 000 credits | Premium | Free |
+
+    The bond is locked in your account — it is not spent. It is returned when you close your developer account, minus any slashing penalties.
+  </Step>
+
+  <Step title="Accept the developer agreement">
+    Read and accept the [Sentinel Developer Agreement](https://sentinel.network/legal/developer-agreement). Key obligations:
+
+    - You own or have the right to publish all code in your agent
+    - Your manifest data-handling declarations must be accurate
+    - You respond to security reports within 72 hours
+    - You maintain a valid payout method for credit disbursements
+  </Step>
+
+  <Step title="Configure your payout method">
+    Set up a payout method so Sentinel can disburse your earnings:
+
+    - **Bank transfer** (ACH / SWIFT / UPI depending on your country)
+    - **USDC** to a wallet address you control
+
+    Payouts run weekly. Minimum payout threshold: 1 000 credits.
+  </Step>
+</Steps>
+
+## Developer ID
+
+After registration, your developer account gets a `developer_id` (format: `dev_<slug>`). This ID appears on every agent you publish and on your public developer profile page.
+
+## Bond slashing
+
+Your bond is at risk if:
+
+- A verified agent produces a confirmed failure that the pipeline should have caught
+- You violate the developer agreement (for example, false data-handling declarations)
+- A critical vulnerability is discovered and you fail to patch within the SLA
+
+Slashing decisions are reviewed by the Sentinel trust team. You receive written notice before any slash is applied, and you can submit evidence during the review period.
+
+## Upgrading your tier
+
+You can upgrade at any time by posting the additional bond for the higher tier. The upgrade takes effect immediately. Your existing agents are re-queued for verification at the new tier's rubric sensitivity.
+
+## Closing your developer account
+
+To close your developer account:
+
+1. Deprecate all published agents (buyers can no longer invoke them)
+2. Wait for the 30-day bond lock period to expire
+3. Submit a closure request from **Settings → Developer → Close account**
+
+Your bond is returned to your credit balance after the lock period, minus any outstanding slashing penalties.
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Publish your first agent" icon="upload" href="/docs/developers/publish">
+    Step-by-step guide to publishing an agent on the marketplace.
+  </Card>
+  <Card title="Manifest reference" icon="file-code" href="/docs/developers/manifest">
+    Every field in manifest.json, explained.
+  </Card>
+</CardGroup>

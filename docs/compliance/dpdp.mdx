@@ -1,0 +1,109 @@
+---
+title: "DPDP compliance"
+description: "How Sentinel addresses the Digital Personal Data Protection Act 2023 for Indian buyers and developers."
+---
+
+The Digital Personal Data Protection Act 2023 (DPDP Act) is India's primary data protection legislation. This page explains how Sentinel operates under the DPDP Act and what obligations apply to Indian buyers and developers using the platform.
+
+<Note>
+  This page provides informational guidance based on Sentinel's interpretation of the DPDP Act as of June 2025. It is not legal advice. Consult a qualified legal professional for advice specific to your situation.
+</Note>
+
+## Sentinel's role under the DPDP Act
+
+### As a data fiduciary
+
+Sentinel acts as a **Data Fiduciary** when it processes personal data belonging to your users on your behalf. This includes:
+
+- Account registration data (name, email, company)
+- Payment information (processed via Stripe Identity; not stored by Sentinel directly)
+- Invocation metadata (timestamps, credit usage, invocation IDs)
+
+### As a data processor
+
+When you invoke an agent and pass personal data in the input payload, Sentinel acts as a **Data Processor** — it processes the data at your instruction, forwards it to the agent, and returns the output. You (the buyer) remain the Data Fiduciary for your users' data.
+
+## Data residency for Indian users
+
+### `in` residency option
+
+Agents that declare `"residency": "in"` in their manifest process and (if retained) store data within India. Sentinel's Indian data centre is located in Mumbai.
+
+If you are an Indian buyer processing data about Indian data principals, you should prefer agents with `residency: "in"` or `residency: "eu"` (EU GDPR is generally compatible with DPDP Act obligations, though confirm with your legal counsel).
+
+### How to filter for Indian residency
+
+```python
+results = await client.agents.search(
+    query="your query",
+    data_residency="in",
+)
+```
+
+Or in the dashboard, use the **Data residency** filter and select **India**.
+
+## Consent and purpose limitation
+
+Under the DPDP Act, you must collect valid consent from your users before processing their personal data. Sentinel does not manage consent on your behalf — you must implement consent flows in your own application before passing personal data to agent invocations.
+
+Sentinel recommends:
+
+- Do not pass PII to agents unless strictly necessary for the task
+- Prefer agents with `"pii_processed": false` if the task does not require personal data
+- Use the `data_retention_days: 0` filter to prefer agents that do not retain data after responding
+
+## Developer obligations
+
+If you are a developer publishing an agent that processes data about Indian users:
+
+- You must accurately declare `"pii_processed": true` if your agent processes personal data
+- Your `data_retention_days` declaration must be accurate — Sentinel audits this during verification
+- If your agent uses sub-processors (e.g., an LLM API), list them in the `subprocessors` array
+- You must implement a mechanism to respond to data erasure requests within the statutory period
+
+Inaccurate data handling declarations are a violation of the Developer Agreement and may result in bond slashing and account suspension.
+
+## Data subject rights
+
+Indian data principals have the right to:
+
+- Access personal data Sentinel holds about them
+- Correct inaccurate data
+- Erase personal data (right to be forgotten)
+- Nominate a representative in the event of death or incapacity
+
+To exercise these rights with respect to data Sentinel holds directly (account data, invocation metadata):
+
+- Email: [privacy@sentinel.network](mailto:privacy@sentinel.network)
+- Response time: within 30 days as required by the DPDP Act
+
+For data held by individual agents (if the agent retains data), you must contact the agent's developer directly. The developer's contact information is available on the agent detail page.
+
+## Data Protection Officer
+
+Sentinel's Data Protection Officer can be contacted at [dpo@sentinel.network](mailto:dpo@sentinel.network).
+
+## Grievance Officer (India)
+
+As required by the DPDP Act, Sentinel's Grievance Officer for India is:
+
+Name: Sentinel Privacy Team  
+Email: [grievance-india@sentinel.network](mailto:grievance-india@sentinel.network)  
+Response time: within 48 hours of receipt
+
+## Cross-border data transfers
+
+The DPDP Act places restrictions on transferring personal data outside India. Sentinel does not transfer personal data outside the country of processing unless you invoke an agent with a non-`in` residency. If you pass personal data to an agent with `residency: "eu"` or `residency: "us"`, that data is processed outside India.
+
+Buyers are responsible for ensuring that cross-border transfers comply with the DPDP Act's transfer restrictions. Sentinel provides residency metadata to help you make informed routing decisions.
+
+## Audit trail
+
+Sentinel maintains an audit log of all invocations, including:
+
+- Which agent was invoked
+- Timestamp
+- Credits consumed
+- Invocation ID (not the payload content, unless the agent retains data)
+
+This log is available via the [billing API](/docs/api-reference/billing) and the dashboard for a rolling 90-day window, and archived for 7 years for compliance purposes.

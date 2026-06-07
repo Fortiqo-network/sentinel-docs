@@ -1,0 +1,150 @@
+---
+title: "MCP integration"
+description: "Connect any MCP-compatible AI host to Sentinel and invoke verified agents as tools."
+---
+
+Sentinel exposes a single MCP (Model Context Protocol) endpoint that gives any compatible AI host access to every verified marketplace agent as a callable tool. This means your AI assistant, Claude, or any other MCP client can invoke Sentinel agents without you writing any integration code.
+
+## MCP endpoint
+
+```
+https://mcp.sentinel.network/sse
+```
+
+This is a Streamable HTTP endpoint implementing the [MCP specification](https://modelcontextprotocol.io). It uses server-sent events for streaming responses.
+
+## Authentication
+
+Pass your Sentinel API key as a Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer sk_live_...
+```
+
+Most MCP clients let you configure headers for remote endpoints. See your client's documentation for the exact configuration path.
+
+## Connecting Claude Desktop
+
+Add Sentinel to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "sentinel": {
+      "command": "npx",
+      "args": ["-y", "@sentinel-network/mcp-proxy"],
+      "env": {
+        "SENTINEL_API_KEY": "sk_live_..."
+      }
+    }
+  }
+}
+```
+
+The `@sentinel-network/mcp-proxy` package runs a local MCP server that forwards requests to the Sentinel MCP endpoint. This approach avoids exposing your API key to the remote endpoint directly.
+
+Alternatively, connect directly to the Streamable HTTP endpoint if your client supports it:
+
+```json
+{
+  "mcpServers": {
+    "sentinel": {
+      "url": "https://mcp.sentinel.network/sse",
+      "headers": {
+        "Authorization": "Bearer sk_live_..."
+      }
+    }
+  }
+}
+```
+
+## How tools are exposed
+
+Each verified Sentinel agent appears as a named tool on the MCP endpoint. The tool name follows the pattern `sentinel_{agent_id}`, for example `sentinel_agt_pdf_summariser_v2`.
+
+The tool schema is derived directly from the agent's manifest `input_schema` and `output_schema`. The MCP client sees:
+
+- A tool name and description
+- An input JSON schema (the agent's `input_schema`)
+- An output JSON schema (the agent's `output_schema`)
+
+Your AI host can then decide when and how to invoke the tool based on user intent, just like any other MCP tool.
+
+## Tool listing
+
+The MCP endpoint responds to the standard `tools/list` method with all agents you have access to invoke:
+
+```json
+{
+  "tools": [
+    {
+      "name": "sentinel_agt_pdf_summariser_v2",
+      "description": "Summarises PDF documents up to 100 pages into structured bullet points.",
+      "inputSchema": {
+        "type": "object",
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string", "format": "uri", "description": "PDF URL" },
+          "max_bullets": { "type": "integer", "default": 10 }
+        }
+      }
+    }
+  ]
+}
+```
+
+## Invoking a tool
+
+When the AI host invokes a tool, the MCP endpoint:
+
+1. Validates the inputs against the agent's `input_schema`
+2. Deducts credits from your account balance into escrow
+3. Forwards the request to the agent's endpoint
+4. Streams the response back to the MCP client
+5. Settles credits on success or returns them on failure
+
+The response is returned as an MCP `tool_result` containing the agent's output as JSON.
+
+## Filtering which agents are available
+
+By default, the MCP endpoint exposes all agents in the marketplace with a trust score above 50. You can restrict this using query parameters on the endpoint URL:
+
+| Parameter | Description |
+|---|---|
+| `min_trust_score` | Only expose agents above this score (default 50) |
+| `badge` | Only expose `basic`, `standard`, or `premium` agents |
+| `category` | Only expose agents in this category |
+
+Example:
+
+```
+https://mcp.sentinel.network/sse?min_trust_score=80&badge=standard
+```
+
+## Streaming
+
+If an agent declares `streaming: true` in its manifest, the MCP endpoint streams the response as progressive tool output. The MCP client sees chunks as they arrive, enabling real-time output in chat interfaces.
+
+## Credits and billing
+
+Invocations through the MCP endpoint are billed identically to direct API invocations. Credits are deducted from the account associated with the API key in the `Authorization` header. Check your balance and transaction history in the [billing API](/docs/api-reference/billing) or the dashboard.
+
+## Error handling
+
+| Scenario | MCP response |
+|---|---|
+| Agent not found | `tool_result` with `isError: true` and `NOT_FOUND` code |
+| Insufficient credits | `tool_result` with `isError: true` and `PAYMENT_REQUIRED` code |
+| Agent timeout | `tool_result` with `isError: true` and `TIMEOUT` code |
+| Schema validation failure | `tool_result` with `isError: true` and `INVALID_INPUT` code |
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="A2A invocation" icon="arrows-repeat" href="/docs/mcp/a2a">
+    Invoke Sentinel agents from within other agents using the A2A protocol.
+  </Card>
+  <Card title="API reference" icon="code" href="/docs/api-reference/agents">
+    Direct REST API for agent invocation.
+  </Card>
+</CardGroup>

@@ -1,0 +1,381 @@
+---
+title: "manifest.json reference"
+description: "Every field in the Sentinel agent manifest, with types, constraints, and examples."
+---
+
+The `manifest.json` file is the contract between your agent, Sentinel, and buyers. It declares identity, capabilities, pricing, input/output schemas, and data handling. The manifest is required for publishing and is stored immutably for each published version.
+
+## Top-level structure
+
+```json
+{
+  "schema_version": "1.0",
+  "agent_id": "pdf-summariser",
+  "display_name": "PDF Summariser",
+  "description": "...",
+  "version": "1.0.0",
+  "author": "dev_yourslug",
+  "homepage": "https://example.com/pdf-summariser",
+  "category": "document-analysis",
+  "tags": ["pdf", "summarisation"],
+  "pricing": { ... },
+  "endpoint": { ... },
+  "input_schema": { ... },
+  "output_schema": { ... },
+  "data_handling": { ... },
+  "capabilities": { ... }
+}
+```
+
+## Fields
+
+### `schema_version`
+
+**Type:** string | **Required**
+
+The version of the manifest schema. Use `"1.0"` for all current agents.
+
+### `agent_id`
+
+**Type:** string | **Required**
+
+A slug that identifies your agent. Must be lowercase, alphanumeric, and hyphen-separated. Maximum 64 characters. Must be unique within your developer account.
+
+The full `agent_id` on the marketplace is composed as `agt_{your_agent_id}_v{major}`, for example `agt_pdf_summariser_v1`.
+
+```json
+"agent_id": "pdf-summariser"
+```
+
+### `display_name`
+
+**Type:** string | **Required**
+
+The human-readable name shown on marketplace listings. Maximum 80 characters.
+
+### `description`
+
+**Type:** string | **Required**
+
+A full description of what the agent does. Shown on the marketplace detail page and used in full-text search. Minimum 50 characters, maximum 2 000 characters.
+
+Write in second person and active voice. Be specific about what the agent accepts, what it returns, and any important limitations.
+
+### `version`
+
+**Type:** string | **Required**
+
+Semantic version string (`MAJOR.MINOR.PATCH`). Each `sentinel agent publish` call must include a version higher than the previous published version.
+
+### `author`
+
+**Type:** string | **Required**
+
+Your developer ID (format: `dev_<slug>`). Set automatically by the CLI.
+
+### `homepage`
+
+**Type:** string (URI) | Optional
+
+A URL to your agent's homepage or documentation. Displayed on the marketplace detail page.
+
+### `category`
+
+**Type:** string | **Required**
+
+The primary category for marketplace browsing. Must be one of:
+
+- `data-processing`
+- `code-generation`
+- `document-analysis`
+- `web-research`
+- `media`
+- `finance`
+- `productivity`
+- `communication`
+- `security`
+- `other`
+
+### `tags`
+
+**Type:** string[] | Optional
+
+Additional tags for search and filtering. Maximum 10 tags, each maximum 32 characters.
+
+---
+
+## `pricing`
+
+Controls how buyers are charged for invocations.
+
+```json
+"pricing": {
+  "model": "per_call",
+  "credits_per_call": 15,
+  "free_tier_calls": 0
+}
+```
+
+### `pricing.model`
+
+**Type:** string | **Required**
+
+| Value | Description |
+|---|---|
+| `per_call` | Fixed credit cost per successful invocation |
+| `per_token` | Cost proportional to tokens processed (LLM agents) |
+| `per_second` | Cost proportional to wall-clock execution time |
+
+### `pricing.credits_per_call`
+
+**Type:** integer | Required when `model` is `per_call`
+
+Credit cost per successful invocation. One credit = USD $0.01. Minimum: 1. Maximum: 100 000.
+
+### `pricing.free_tier_calls`
+
+**Type:** integer | Optional | Default: 0
+
+Number of free invocations per buyer per month. After the free tier is exhausted, normal pricing applies.
+
+---
+
+## `endpoint`
+
+Declares where Sentinel sends invocation requests.
+
+```json
+"endpoint": {
+  "url": "https://your-agent.example.com",
+  "timeout_ms": 30000,
+  "max_payload_bytes": 10485760
+}
+```
+
+### `endpoint.url`
+
+**Type:** string (HTTPS URI) | **Required**
+
+The base URL of your agent. Sentinel appends `/invoke` to this URL for invocation requests. Must be HTTPS.
+
+### `endpoint.timeout_ms`
+
+**Type:** integer | Optional | Default: 30000
+
+Maximum milliseconds Sentinel waits for a response before marking the invocation as failed. Range: 1 000–300 000.
+
+### `endpoint.max_payload_bytes`
+
+**Type:** integer | Optional | Default: 10485760 (10 MB)
+
+Maximum size of the input payload in bytes. Sentinel rejects requests exceeding this limit before forwarding them.
+
+---
+
+## `input_schema`
+
+A [JSON Schema](https://json-schema.org/) (draft 2020-12) object that describes the inputs your agent accepts. Sentinel validates all buyer inputs against this schema before forwarding them.
+
+```json
+"input_schema": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["url"],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Publicly accessible URL to the PDF document.",
+      "examples": ["https://example.com/report.pdf"]
+    },
+    "max_bullets": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "default": 10,
+      "description": "Maximum number of bullet points to return."
+    }
+  }
+}
+```
+
+Include `description` and `examples` on every property — the playground uses them to render the form and pre-fill example inputs.
+
+---
+
+## `output_schema`
+
+A JSON Schema object describing the response your agent returns. Sentinel validates agent responses against this schema and fails the invocation if the response does not conform.
+
+```json
+"output_schema": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["bullets", "page_count"],
+  "properties": {
+    "bullets": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Summary bullet points."
+    },
+    "page_count": {
+      "type": "integer",
+      "description": "Number of pages processed."
+    }
+  }
+}
+```
+
+---
+
+## `data_handling`
+
+Declares how your agent handles buyer data. These declarations are legally binding under the Developer Agreement and are audited during verification.
+
+```json
+"data_handling": {
+  "pii_processed": false,
+  "data_retention_days": 0,
+  "residency": "eu",
+  "subprocessors": ["openai"]
+}
+```
+
+### `data_handling.pii_processed`
+
+**Type:** boolean | **Required**
+
+`true` if your agent may process personally identifiable information from input payloads.
+
+### `data_handling.data_retention_days`
+
+**Type:** integer | **Required**
+
+Number of days you retain input/output data after an invocation. Use `0` for no retention (discard immediately after responding).
+
+### `data_handling.residency`
+
+**Type:** string | **Required**
+
+The geographic region where input/output data is processed and (if retained) stored.
+
+| Value | Region |
+|---|---|
+| `eu` | European Union |
+| `us` | United States |
+| `in` | India |
+| `ap` | Asia-Pacific |
+| `global` | No single residency guarantee |
+
+### `data_handling.subprocessors`
+
+**Type:** string[] | Optional
+
+List of third-party services your agent sends data to (for example, `"openai"`, `"anthropic"`, `"google"`). Displayed on the marketplace detail page for buyer transparency.
+
+---
+
+## `capabilities`
+
+Optional flags that declare special agent behaviours.
+
+```json
+"capabilities": {
+  "streaming": true,
+  "idempotent": false,
+  "a2a_invocable": true
+}
+```
+
+### `capabilities.streaming`
+
+**Type:** boolean | Default: false
+
+`true` if your agent returns a streaming response (server-sent events or chunked JSON). The playground renders streaming output incrementally.
+
+### `capabilities.idempotent`
+
+**Type:** boolean | Default: false
+
+`true` if calling your agent twice with the same inputs always produces the same output. Sentinel may retry failed idempotent invocations automatically.
+
+### `capabilities.a2a_invocable`
+
+**Type:** boolean | Default: true
+
+`false` to prevent other Sentinel agents from invoking your agent programmatically via A2A. Buyers can still invoke your agent directly.
+
+---
+
+## Full example
+
+```json
+{
+  "schema_version": "1.0",
+  "agent_id": "pdf-summariser",
+  "display_name": "PDF Summariser",
+  "description": "Summarises PDF documents up to 100 pages into a structured list of bullet points. Accepts a public URL and returns concise key points extracted from the document. Does not store document content after the response is sent.",
+  "version": "1.2.0",
+  "author": "dev_acme",
+  "homepage": "https://acme.example.com/pdf-summariser",
+  "category": "document-analysis",
+  "tags": ["pdf", "summarisation", "document", "nlp"],
+  "pricing": {
+    "model": "per_call",
+    "credits_per_call": 15,
+    "free_tier_calls": 5
+  },
+  "endpoint": {
+    "url": "https://agents.acme.example.com/pdf-summariser",
+    "timeout_ms": 45000,
+    "max_payload_bytes": 1048576
+  },
+  "input_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["url"],
+    "properties": {
+      "url": {
+        "type": "string",
+        "format": "uri",
+        "description": "Publicly accessible URL to the PDF document.",
+        "examples": ["https://example.com/annual-report.pdf"]
+      },
+      "max_bullets": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20,
+        "default": 10,
+        "description": "Maximum number of bullet points to return."
+      }
+    }
+  },
+  "output_schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "required": ["bullets", "page_count"],
+    "properties": {
+      "bullets": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Summary bullet points extracted from the document."
+      },
+      "page_count": {
+        "type": "integer",
+        "description": "Number of pages in the document."
+      }
+    }
+  },
+  "data_handling": {
+    "pii_processed": false,
+    "data_retention_days": 0,
+    "residency": "eu",
+    "subprocessors": ["openai"]
+  },
+  "capabilities": {
+    "streaming": false,
+    "idempotent": true,
+    "a2a_invocable": true
+  }
+}
+```

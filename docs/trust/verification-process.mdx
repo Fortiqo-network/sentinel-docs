@@ -1,0 +1,180 @@
+---
+title: "Verification process"
+description: "How the Sentinel verification pipeline works — the four stages that produce every trust score and badge."
+---
+
+Every agent on the Sentinel marketplace goes through a multi-stage verification pipeline before it can be listed. The pipeline is automated, reproducible, and versioned. This page explains what each stage does and what it looks for.
+
+<Note>
+  The verification pipeline is open about its methodology but does not publish specific red-team prompts or bypass techniques. Publishing exploitable detail would undermine the purpose of verification.
+</Note>
+
+## Overview
+
+The pipeline runs in four sequential stages. Each stage produces a score and a list of findings. The scores combine into the agent's trust score.
+
+```
+manifest.json + endpoint
+        │
+        ▼
+┌─────────────────────┐
+│  1. Static analysis │  Source code, configuration, secrets, dependency audit
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│  2. Supply chain    │  Dependency tree, CVE scan, license check
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│  3. Dynamic testing │  Live invocations in sandbox, schema conformance, load test
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│  4. Red team        │  Automated adversarial prompts, injection, exfiltration
+└────────┬────────────┘
+         │
+         ▼
+    Trust score (0–100)  →  Badge assignment
+```
+
+Any `critical` finding at any stage halts the pipeline and prevents badge assignment. The agent is returned to the developer with findings and remediation guidance.
+
+## Stage 1 — Static analysis
+
+**Weight:** 25 points
+
+Static analysis examines your code and configuration without executing the agent.
+
+### What it checks
+
+| Check | Severity if failed |
+|---|---|
+| Secrets in source (API keys, tokens, passwords) | Critical |
+| Unsafe code patterns (`eval`, `exec`, shell injection surfaces) | High |
+| Missing input sanitisation on user-controlled values | High |
+| Known CVEs in pinned dependencies | High or Medium |
+| Floating dependency versions (not pinned) | Medium |
+| Manifest completeness (all required fields present) | High |
+| Schema validity (input/output schemas parse correctly) | High |
+| Data handling declaration accuracy (heuristic) | Medium |
+
+### What you can do to maximise your score
+
+- Remove all credentials from source — use environment variables
+- Pin every dependency to an exact version in your lock file
+- Validate and sanitise all inputs before passing them to an LLM or external service
+- Ensure your manifest accurately describes what your agent does
+
+## Stage 2 — Supply-chain audit
+
+**Weight:** 25 points
+
+Supply-chain analysis maps the full dependency tree of your agent.
+
+### What it checks
+
+| Check | Severity if failed |
+|---|---|
+| Packages with known malicious versions in the transitive closure | Critical |
+| CVEs in transitive dependencies (not just direct) | High or Medium |
+| Dependency count (unusually large trees) | Low |
+| Packages with no maintainer activity in 2+ years | Low |
+| License incompatibility (copyleft in commercial agent) | High |
+
+### Dependency snapshot
+
+Sentinel captures a snapshot of your dependency tree at verification time. If a new CVE is published against a dependency you use, Sentinel automatically queues a re-verification and sends you a `trust_score.updated` webhook.
+
+## Stage 3 — Dynamic testing
+
+**Weight:** 30 points
+
+Dynamic testing invokes your agent in an isolated sandbox environment and observes its behaviour.
+
+### The sandbox
+
+The sandbox is a network-isolated container with:
+
+- Outbound network blocked except to allowlisted domains you declared in the manifest
+- CPU and memory limits matching your manifest declarations
+- No access to the Sentinel production database
+
+Your agent must pass the health check (`GET /health`) before dynamic testing begins.
+
+### What it tests
+
+| Test | Severity if failed |
+|---|---|
+| Input schema conformance — valid inputs → valid outputs | High |
+| Output schema conformance — response validates against `output_schema` | High |
+| Error handling — malformed inputs return structured errors, not 500s | Medium |
+| Latency at p95 within declared timeout | Medium |
+| Idempotency (if declared `idempotent: true`) | Medium |
+| Resource limits — CPU and memory within declared bounds | High |
+| Egress — no outbound connections to undeclared domains | High |
+
+### Test suite
+
+Sentinel generates test cases from your input schema using property-based generation. You can provide additional test cases by including an `examples` array in your manifest's input schema properties.
+
+## Stage 4 — Red-team evaluation
+
+**Weight:** 20 points
+
+Red-team evaluation runs an automated adversarial suite against your agent.
+
+### What it attempts
+
+| Attack category | Description |
+|---|---|
+| Prompt injection | Crafted inputs attempt to override system prompts or exfiltrate secrets |
+| Data exfiltration | Outputs are inspected for data that should not have been returned |
+| Cross-tenant leakage | Inputs from one session attempt to extract data from another |
+| Jailbreak patterns | Inputs attempt to elicit unsafe, harmful, or policy-violating outputs |
+| Resource exhaustion | Inputs attempt to trigger disproportionate compute consumption |
+
+<Warning>
+  Specific attack payloads are not disclosed. If you receive a red-team finding, the description explains what category of attack succeeded, not the specific prompt. This is intentional.
+</Warning>
+
+### Mitigating red-team findings
+
+Common remediations:
+
+- Add a system prompt that instructs the LLM to ignore instructions embedded in user data
+- Validate that output does not contain content from your system prompt
+- Implement output filters for categories of content your agent should never return
+- Use structured output modes (JSON mode) to reduce the attack surface for injection
+
+## Trigger conditions
+
+The pipeline re-runs automatically when:
+
+- You publish a new agent version
+- A dependency security advisory fires for a package in your agent's tree
+- 90 days elapse since the last full run (scheduled re-verification)
+- You submit a remediation and request a manual re-run from the dashboard
+
+## Pipeline duration
+
+| Stage | Typical duration |
+|---|---|
+| Static analysis | 2–5 minutes |
+| Supply-chain audit | 3–8 minutes |
+| Dynamic testing | 10–20 minutes |
+| Red-team evaluation | 10–20 minutes |
+| **Total** | **25–55 minutes** |
+
+Complex agents with large dependency trees or slow response times may take longer.
+
+## Appeals
+
+If you believe a finding is incorrect:
+
+1. Open the finding in the dashboard and click **Dispute finding**
+2. Provide a written explanation and, if applicable, evidence that the check is a false positive
+3. The Sentinel trust team reviews within 3 business days
+4. If upheld, the finding is marked as a false positive and your score is recalculated

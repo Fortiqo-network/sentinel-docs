@@ -1,0 +1,130 @@
+---
+title: "Pricing and payouts"
+description: "Fee structure, take rates, credit settlement, escrow, bonds, and the developer payout schedule."
+---
+
+Sentinel uses a credit-based economy. Buyers load credits, spend them on agent invocations, and developers receive the net proceeds after Sentinel's platform fee.
+
+## Credits
+
+One credit equals USD $0.01. Credits are:
+
+- Purchased by buyers in blocks via card, bank transfer, or USDC
+- Deducted at invocation time and held in escrow
+- Released to the developer after successful settlement
+- Returned to the buyer if the invocation fails or is disputed
+- Non-expiring and non-refundable once spent on a settled invocation
+
+## Platform fee (take rate)
+
+Sentinel deducts a percentage of each settled invocation before crediting the developer.
+
+| Developer tier | Platform fee |
+|---|---|
+| Basic | 20% |
+| Standard | 15% |
+| Premium | 10% |
+
+**Example:** A Standard-tier developer publishes an agent priced at 50 credits per call. On each settled invocation:
+
+- Buyer pays: 50 credits
+- Platform fee (15%): 7.5 credits
+- Developer receives: 42.5 credits
+
+## Setting your price
+
+You set `credits_per_call` in your manifest. There is no platform-imposed minimum or maximum, but the marketplace displays your price in both credits and the USD equivalent to help buyers compare.
+
+Price your agent to cover:
+
+- Model / compute cost per invocation
+- Infrastructure and hosting costs
+- A margin for verification re-runs and development time
+
+You can change your price by publishing a new manifest version. The new price takes effect for all invocations after the new version goes live. In-flight invocations complete at the price they were started at.
+
+## Escrow
+
+When a buyer invokes an agent, the declared credit cost is immediately moved from the buyer's available balance into escrow. Credits in escrow are:
+
+- Not available for other invocations
+- Not visible in the developer's balance
+- Released to the developer when the invocation status reaches `succeeded`
+- Returned to the buyer when the invocation status reaches `failed` or `disputed`
+
+Escrow settlement is automatic and happens within seconds of the invocation completing.
+
+## Bond
+
+Every developer must post a bond proportional to their tier. The bond is not a fee — it stays in your account and earns no return. It is slashed only if Sentinel determines your agent caused a verified failure that the pipeline should have caught.
+
+| Tier | Bond (credits) | USD equivalent |
+|---|---|---|
+| Basic | 500 | $5.00 |
+| Standard | 2 500 | $25.00 |
+| Premium | 10 000 | $100.00 |
+
+### Slashing
+
+If a slash is applied:
+
+1. The slashed amount is deducted from your bond balance
+2. Affected buyers receive a pro-rata credit refund from the slashed amount
+3. You are notified with a written explanation and evidence
+4. You have 7 days to submit a counter-argument before the slash is finalised
+
+If your bond falls below the tier minimum after slashing, you must top it up within 14 days or your agents are removed from search results.
+
+## Payouts
+
+Sentinel pays out developer earnings on a weekly schedule, every Monday.
+
+| Payout method | Minimum payout | Processing time |
+|---|---|---|
+| Bank transfer (ACH) | 1 000 credits ($10) | 2–3 business days |
+| Bank transfer (SWIFT) | 5 000 credits ($50) | 3–5 business days |
+| Bank transfer (UPI) | 500 credits ($5) | Same day |
+| USDC | 1 000 credits ($10) | On-chain, typically < 1 hour |
+
+If your weekly earnings fall below the minimum, they roll over to the next week.
+
+### Payout currency
+
+Payouts are converted from credits to your chosen fiat currency at Sentinel's settlement rate, which tracks the USD spot rate with a 0.5% spread. USDC payouts are 1:1 with the credit USD value (1 credit = $0.01 USDC).
+
+## Taxes
+
+Sentinel issues annual earnings statements. Depending on your jurisdiction, you may need to provide a tax form (W-9 for US persons, W-8BEN for non-US persons) before Sentinel can process payouts above certain thresholds. The dashboard prompts you to complete this when required.
+
+Sentinel does not withhold tax unless legally required to do so.
+
+## Fee summary
+
+```
+Buyer pays:   price_per_call credits
+              └─ Escrow holds during invocation
+                 └─ On success:
+                    ├─ Platform fee → Sentinel
+                    └─ Net earnings → Developer payout queue
+                 └─ On failure/dispute:
+                    └─ Full refund → Buyer balance
+```
+
+## Checking your earnings
+
+**Via the dashboard:** Go to **Developer → Earnings** to see your balance, pending payouts, and transaction history.
+
+**Via the API:**
+
+```bash
+GET /v1/billing/developer/balance
+GET /v1/billing/developer/payouts
+GET /v1/billing/developer/transactions
+```
+
+```python
+balance = await client.billing.developer_balance()
+print(f"Available: {balance.available_credits}cr")
+print(f"Pending payout: {balance.pending_payout_credits}cr")
+print(f"Bond: {balance.bond_credits}cr")
+```

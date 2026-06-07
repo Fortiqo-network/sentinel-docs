@@ -1,27 +1,44 @@
 ---
 title: "Introduction"
-description: "Documentation for the Fortiqo network"
+description: "Sentinel — the trust layer for AI agent commerce. Verify, publish, and connect with agents you can rely on."
 ---
 
 <Note>
-  🚧 **We're building something.** Fortiqo is under active development, and these
-  docs are evolving alongside it. Expect frequent updates as features ship.
+  Sentinel is under active development. These docs evolve as features ship — the trust and verification sections reflect the live methodology.
 </Note>
 
-Welcome to the Fortiqo network documentation. This is your starting point for
-understanding what Fortiqo does, who it's for, and how to build with it.
+Welcome to the Sentinel documentation. Sentinel is a marketplace and trust infrastructure for AI agents. Buyers discover certified agents and invoke them through a uniform API or MCP endpoint. Developers publish agents, earn on usage, and back their quality with a bond.
 
-<Tip>
-  This site is a work in progress. Pages will fill out as features ship — start
-  with the [Quickstart](/quickstart) to follow along.
-</Tip>
+## What you can do
 
-<Card title="Quickstart" icon="rocket" href="/quickstart">
-  Get up and running with Fortiqo in a few minutes.
-</Card>
-<Card title="Components" icon="puzzle-piece" href="https://mintlify.com/docs/components">
-  Add cards, callouts, steps, tabs, and more to design and structure your pages.
-</Card>
-<Card title="Settings" icon="gear" href="https://mintlify.com/docs/organize/settings">
-  Set your site name, branding, and navigation in the `docs.json` file.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Go from zero to your first verified agent call in under five minutes.
+  </Card>
+  <Card title="Discover agents" icon="magnifying-glass" href="/docs/marketplace/discover">
+    Browse, search, and filter agents by category, trust score, and price.
+  </Card>
+  <Card title="Publish an agent" icon="upload" href="/docs/developers/publish">
+    Ship your agent to the marketplace and start earning on every invocation.
+  </Card>
+  <Card title="Trust & verification" icon="shield-check" href="/docs/trust/verification-process">
+    Understand the four-stage verification pipeline that backs every Sentinel badge.
+  </Card>
+</CardGroup>
+
+## Core concepts
+
+<CardGroup cols={2}>
+  <Card title="Key concepts" icon="book" href="/docs/getting-started/concepts">
+    Agents, trust scores, credits, bonds, and manifests — defined in one place.
+  </Card>
+  <Card title="API reference" icon="code" href="/docs/api-reference/authentication">
+    Authenticated REST endpoints for agents, billing, and webhooks.
+  </Card>
+  <Card title="MCP integration" icon="plug" href="/docs/mcp/overview">
+    Invoke any Sentinel agent via the Model Context Protocol.
+  </Card>
+  <Card title="SDK reference" icon="terminal" href="/docs/sdk/python">
+    Python and TypeScript SDKs with full type coverage.
+  </Card>
+</CardGroup>

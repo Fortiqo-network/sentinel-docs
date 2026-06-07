@@ -1,0 +1,133 @@
+---
+title: "Badges"
+description: "Sentinel trust badge types, minimum score thresholds, and display guidelines for embedding badges in your documentation."
+---
+
+Sentinel badges are visual certifications that communicate an agent's trust tier at a glance. Badges are computed automatically from the trust score and displayed on marketplace listings. Developers can also embed badges in external documentation and README files.
+
+## Badge tiers
+
+| Badge | Minimum trust score | Description |
+|---|---|---|
+| **Premium** | 90 | Highest tier. No critical or high findings. Full pipeline pass with strong red-team results. |
+| **Standard** | 75 | Strong posture. No critical findings. At most minor medium findings. |
+| **Basic** | 50 | Acceptable posture. Multiple medium findings may be present. Use in production with caution. |
+| _(none)_ | Below 50 | The agent has not met the minimum threshold. It is not listed on the marketplace. |
+
+A badge is never assigned if the agent has any `critical` finding, regardless of the total score.
+
+## Badge appearance
+
+Each badge has a light and dark variant. They are SVG files served from Sentinel's CDN with cache headers so they always reflect the current score.
+
+| Badge | Light | Dark |
+|---|---|---|
+| Premium | Green shield with a star | Same, dark background |
+| Standard | Green shield with a checkmark | Same, dark background |
+| Basic | Grey shield with a checkmark | Same, dark background |
+
+## Embedding a badge
+
+### Markdown / GitHub README
+
+```markdown
+[![Sentinel Premium](https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg)](https://sentinel.network/agents/agt_pdf_summariser_v2)
+```
+
+The badge SVG updates automatically when the trust score changes. You do not need to update the URL when you publish a new version.
+
+### HTML
+
+```html
+<a href="https://sentinel.network/agents/agt_pdf_summariser_v2">
+  <img
+    src="https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg"
+    alt="Sentinel trust badge"
+    height="20"
+  />
+</a>
+```
+
+### Mintlify / MDX
+
+```mdx
+<a href="https://sentinel.network/agents/agt_pdf_summariser_v2">
+  <img
+    src="https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg"
+    alt="Sentinel trust badge"
+    height="20"
+  />
+</a>
+```
+
+### Badge URL structure
+
+```
+https://badges.sentinel.network/{agent_id}/badge.svg
+https://badges.sentinel.network/{agent_id}/badge.png   # PNG fallback, 2x resolution
+```
+
+You can request a specific style with query parameters:
+
+| Parameter | Values | Description |
+|---|---|---|
+| `style` | `flat` (default), `shield`, `compact` | Badge style |
+| `theme` | `light` (default), `dark` | Colour theme |
+| `label` | string | Override the left-hand label text |
+
+Example: `https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg?style=shield&theme=dark`
+
+## Badge metadata
+
+The badge SVG includes microdata attributes for programmatic consumption:
+
+```html
+<svg
+  data-agent-id="agt_pdf_summariser_v2"
+  data-trust-score="87"
+  data-badge="standard"
+  data-verified-at="2025-05-14T09:32:00Z"
+  ...
+>
+```
+
+## Badge verification
+
+Anyone can verify that a displayed badge is authentic by checking the badge API:
+
+```bash
+GET https://api.sentinel.network/v1/agents/{agent_id}/badge
+```
+
+```json
+{
+  "agent_id": "agt_pdf_summariser_v2",
+  "badge": "standard",
+  "trust_score": 87,
+  "verified_at": "2025-05-14T09:32:00Z",
+  "badge_url": "https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg"
+}
+```
+
+## Display guidelines
+
+Follow these guidelines when embedding Sentinel badges:
+
+- **Do** link the badge to the Sentinel marketplace listing for that agent
+- **Do** display the badge near trust-sensitive claims ("this agent is safe to use with customer data")
+- **Do not** alter the badge colours or typography
+- **Do not** display a badge for a version other than the current published version
+- **Do not** claim your agent has a higher badge than the one Sentinel has issued
+- **Do not** use a static screenshot of the badge — use the live SVG URL so it stays current
+
+Violations of these guidelines may result in your developer account being suspended.
+
+## Badge revocation
+
+A badge is revoked automatically when:
+
+- A re-verification run produces a score below the badge threshold
+- A critical finding is identified in a scheduled or CVE-triggered re-verification
+- Sentinel determines the developer violated the Developer Agreement
+
+When a badge is revoked, the live badge SVG updates within seconds. Buyers who have embedded the badge in their documentation will see the updated (or removed) badge automatically.

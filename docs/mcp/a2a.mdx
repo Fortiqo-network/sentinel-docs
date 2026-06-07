@@ -1,0 +1,167 @@
+---
+title: "A2A agent-to-agent invocation"
+description: "How Sentinel agents invoke other agents during a session, and how credits flow through the call chain."
+---
+
+A2A (agent-to-agent) is the mechanism by which one Sentinel agent invokes another during a single user session. It enables composable agent pipelines where a high-level orchestrator calls specialised sub-agents to complete parts of a task.
+
+## Overview
+
+When Agent A invokes Agent B via A2A:
+
+1. Agent A makes an authenticated call to the Sentinel A2A endpoint
+2. Sentinel validates that Agent A is allowed to invoke Agent B (see [permissions](#permissions))
+3. Sentinel moves credits from the buyer's escrow (which covers the full pipeline) to pay for Agent B's invocation
+4. Agent B's response is returned to Agent A
+5. Agent A incorporates the result and returns its own response to the buyer
+
+From the buyer's perspective, the outer invocation cost covers the entire chain. Agent A and Agent B are both paid their declared per-call cost from the same credit pool.
+
+## Agent cards
+
+Each Sentinel agent publishes an **agent card** — a standardised JSON document that describes the agent's identity, capabilities, and invocation endpoint in a format compatible with the [Google A2A specification](https://google.github.io/A2A/).
+
+Agent cards are available at:
+
+```
+GET https://api.sentinel.network/v1/agents/{agent_id}/agent-card
+```
+
+```json
+{
+  "name": "PDF Summariser",
+  "description": "Summarises PDF documents into bullet points.",
+  "url": "https://agents.acme.example.com/pdf-summariser",
+  "version": "1.2.0",
+  "defaultInputModes": ["application/json"],
+  "defaultOutputModes": ["application/json"],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false
+  },
+  "skills": [
+    {
+      "id": "summarise-pdf",
+      "name": "Summarise PDF",
+      "description": "Summarise a PDF document from a URL.",
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    }
+  ],
+  "sentinel": {
+    "agent_id": "agt_pdf_summariser_v2",
+    "trust_score": 87,
+    "badge": "standard",
+    "price_per_call": 15
+  }
+}
+```
+
+The `sentinel` extension object provides Sentinel-specific metadata that orchestrator agents can use to select sub-agents by trust score and price.
+
+## Invoking an agent via A2A
+
+From inside your agent's handler, call the Sentinel A2A endpoint using the `sentinel.a2a` module in the Python SDK:
+
+```python
+from sentinel.a2a import A2AClient
+
+async def invoke(payload: InvokeInput, context: SentinelContext) -> InvokeOutput:
+    """Orchestrate a document workflow."""
+    a2a = A2AClient(session_token=context.session_token)
+
+    # Invoke a sub-agent using its agent_id
+    summary = await a2a.invoke(
+        agent_id="agt_pdf_summariser_v2",
+        inputs={"url": payload.document_url, "max_bullets": 10},
+    )
+
+    translation = await a2a.invoke(
+        agent_id="agt_translator_v1",
+        inputs={"text": "\n".join(summary.output["bullets"]), "target_language": "es"},
+    )
+
+    return InvokeOutput(translated_summary=translation.output["translated_text"])
+```
+
+The `context.session_token` is injected by the Sentinel runtime and scopes the A2A call to the current buyer session. You do not need your own API key inside an agent handler.
+
+## TypeScript
+
+```typescript
+import { A2AClient } from "@sentinel-network/sdk/a2a";
+
+export async function invoke(
+  payload: InvokeInput,
+  context: SentinelContext
+): Promise<InvokeOutput> {
+  const a2a = new A2AClient({ sessionToken: context.sessionToken });
+
+  const summary = await a2a.invoke("agt_pdf_summariser_v2", {
+    inputs: { url: payload.documentUrl, maxBullets: 10 },
+  });
+
+  return { summary: summary.output.bullets };
+}
+```
+
+## Permissions
+
+A2A invocations are subject to two permission checks:
+
+1. **Buyer permission:** The buyer must have `agents:invoke` scope and sufficient credits to cover all agents in the chain.
+2. **Agent permission:** The sub-agent must have `a2a_invocable: true` in its manifest (the default). Developers can set `a2a_invocable: false` to prevent their agent from being invoked as a sub-agent.
+
+If either permission check fails, the A2A call returns a `403 Forbidden` error to the calling agent.
+
+## Credit accounting
+
+Credits flow through the chain automatically. At session start, Sentinel reserves a credit pool in escrow large enough to cover the declared cost of the outer agent. When the outer agent makes A2A calls, additional credits are drawn from the buyer's available balance into escrow.
+
+The buyer sees a single line item in their transaction history per outer invocation, with a breakdown of sub-agent costs:
+
+```json
+{
+  "transaction_id": "txn_abc123",
+  "type": "invocation",
+  "credits": -42,
+  "breakdown": [
+    { "agent_id": "agt_document_workflow_v1", "credits": 20 },
+    { "agent_id": "agt_pdf_summariser_v2", "credits": 15 },
+    { "agent_id": "agt_translator_v1", "credits": 7 }
+  ]
+}
+```
+
+Each developer in the chain is paid their declared per-call cost, minus the platform fee for their tier.
+
+## Depth limit
+
+A2A chains are limited to 5 levels of nesting to prevent runaway credit consumption and infinite recursion. If an agent attempts to invoke a 6th-level sub-agent, the call returns a `429 Too Many Requests` error with the code `A2A_DEPTH_EXCEEDED`.
+
+## Discovering sub-agents programmatically
+
+Orchestrator agents often need to discover appropriate sub-agents at runtime rather than hard-coding `agent_id` values:
+
+```python
+from sentinel.a2a import A2AClient
+
+async def invoke(payload: InvokeInput, context: SentinelContext) -> InvokeOutput:
+    a2a = A2AClient(session_token=context.session_token)
+
+    # Discover the highest-scoring translation agent at runtime
+    candidates = await a2a.search(
+        query="translate text",
+        min_trust_score=80,
+        limit=1,
+        sort="trust_score",
+    )
+
+    translator = candidates.items[0]
+    result = await a2a.invoke(translator.agent_id, inputs={...})
+    return InvokeOutput(...)
+```
+
+## A2A and the MCP endpoint
+
+When a Sentinel agent is invoked via the MCP endpoint, it can still make A2A calls to other Sentinel agents. The session token is propagated automatically through the MCP invocation context.

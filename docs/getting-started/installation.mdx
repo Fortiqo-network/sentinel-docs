@@ -1,0 +1,164 @@
+---
+title: "Installation"
+description: "Install the Sentinel SDK for Python or TypeScript and configure your environment."
+---
+
+Sentinel provides first-party SDKs for Python and TypeScript. Both SDKs are thin, typed wrappers around the REST API with async-first design.
+
+## Python SDK
+
+### Requirements
+
+- Python 3.12 or higher
+- `uv` (recommended) or `pip`
+
+### Install
+
+```bash
+uv add sentinel-sdk
+```
+
+Or with pip:
+
+```bash
+pip install sentinel-sdk
+```
+
+### Configure
+
+The client reads `SENTINEL_API_KEY` from the environment by default.
+
+```bash
+export SENTINEL_API_KEY="sk_live_..."
+```
+
+You can also pass the key explicitly, which is useful in test environments where you want to avoid reading from the environment:
+
+```python
+from sentinel import SentinelClient
+
+client = SentinelClient(api_key="sk_test_...")
+```
+
+### Verify the install
+
+```python
+import asyncio
+from sentinel import SentinelClient
+
+async def main() -> None:
+    client = SentinelClient()
+    me = await client.auth.whoami()
+    print(f"Authenticated as {me.account_id}")
+
+asyncio.run(main())
+```
+
+## TypeScript SDK
+
+### Requirements
+
+- Node.js 20 or higher (or Bun 1.x)
+- `npm`, `pnpm`, or `bun`
+
+### Install
+
+```bash
+npm install @sentinel-network/sdk
+# or
+pnpm add @sentinel-network/sdk
+# or
+bun add @sentinel-network/sdk
+```
+
+### Configure
+
+```bash
+export SENTINEL_API_KEY="sk_live_..."
+```
+
+```typescript
+import { SentinelClient } from "@sentinel-network/sdk";
+
+const client = new SentinelClient(); // reads SENTINEL_API_KEY from process.env
+```
+
+Or pass the key directly:
+
+```typescript
+const client = new SentinelClient({ apiKey: "sk_test_..." });
+```
+
+### Verify the install
+
+```typescript
+import { SentinelClient } from "@sentinel-network/sdk";
+
+const client = new SentinelClient();
+const me = await client.auth.whoami();
+console.log(`Authenticated as ${me.accountId}`);
+```
+
+## CLI
+
+Install the Sentinel CLI for local development, verification runs, and publishing.
+
+```bash
+uv tool install sentinel-cli
+```
+
+Or globally with pip:
+
+```bash
+pip install sentinel-cli
+```
+
+Verify:
+
+```bash
+sentinel --version
+```
+
+Log in:
+
+```bash
+sentinel auth login
+```
+
+This opens a browser window for OAuth. On headless environments, use `--api-key` instead:
+
+```bash
+sentinel auth login --api-key sk_live_...
+```
+
+See the full [CLI reference](/docs/sdk/cli).
+
+## Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `SENTINEL_API_KEY` | Yes | API key for authentication |
+| `SENTINEL_BASE_URL` | No | Override the API base URL (useful for self-hosted or staging) |
+| `SENTINEL_TIMEOUT_MS` | No | Request timeout in milliseconds (default: `30000`) |
+| `SENTINEL_LOG_LEVEL` | No | `debug`, `info`, `warn`, or `error` (default: `warn`) |
+
+<Note>
+  Never commit your API key to version control. Use a `.env` file and add it to `.gitignore`, or use your platform's secret management.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Your first agent call, step by step.
+  </Card>
+  <Card title="Python SDK reference" icon="python" href="/docs/sdk/python">
+    Full API surface of the Python SDK.
+  </Card>
+  <Card title="TypeScript SDK reference" icon="js" href="/docs/sdk/typescript">
+    Full API surface of the TypeScript SDK.
+  </Card>
+  <Card title="CLI reference" icon="terminal" href="/docs/sdk/cli">
+    Commands for publishing, verifying, and managing agents.
+  </Card>
+</CardGroup>

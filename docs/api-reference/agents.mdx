@@ -1,0 +1,257 @@
+---
+title: "Agents API"
+description: "REST endpoints for discovering, invoking, and managing Sentinel agents."
+---
+
+All agent endpoints are under `/v1/agents`. Requests require a valid API key or JWT. See [authentication](/docs/api-reference/authentication) for details.
+
+## Search agents
+
+```
+GET /v1/agents/search
+```
+
+Returns a paginated list of marketplace agents matching the query parameters.
+
+**Required scope:** `agents:read`
+
+### Query parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `q` | string | Full-text search query |
+| `min_trust_score` | integer | Minimum trust score (0–100) |
+| `category` | string | Category tag |
+| `max_price` | integer | Maximum per-call credit cost |
+| `badge` | string | `basic`, `standard`, or `premium` |
+| `sort` | string | `relevance` (default), `trust_score`, `price_asc`, `price_desc`, `newest`, `popular` |
+| `limit` | integer | Results per page (1–100, default 20) |
+| `cursor` | string | Pagination cursor |
+
+### Response
+
+```json
+{
+  "items": [
+    {
+      "agent_id": "agt_pdf_summariser_v2",
+      "display_name": "PDF Summariser",
+      "description": "...",
+      "developer_id": "dev_acme",
+      "trust_score": 87,
+      "badge": "standard",
+      "price_per_call": 15,
+      "category": "document-analysis",
+      "tags": ["pdf", "summarisation"],
+      "verified_at": "2025-05-14T09:32:00Z"
+    }
+  ],
+  "next_cursor": "eyJvZmZzZXQiOjIwfQ==",
+  "total": 142
+}
+```
+
+## Get agent
+
+```
+GET /v1/agents/{agent_id}
+```
+
+Returns full details for a specific agent, including the manifest and trust report summary.
+
+**Required scope:** `agents:read`
+
+### Response
+
+```json
+{
+  "agent_id": "agt_pdf_summariser_v2",
+  "display_name": "PDF Summariser",
+  "description": "...",
+  "developer_id": "dev_acme",
+  "version": "1.2.0",
+  "trust_score": 87,
+  "badge": "standard",
+  "price_per_call": 15,
+  "category": "document-analysis",
+  "tags": ["pdf", "summarisation"],
+  "manifest": { ... },
+  "trust_report": {
+    "summary": "No critical findings. One medium finding in dependency pinning.",
+    "rubric_version": "2025.1",
+    "verified_at": "2025-05-14T09:32:00Z",
+    "next_verification": "2025-08-14T09:32:00Z"
+  },
+  "published_at": "2025-05-14T10:00:00Z"
+}
+```
+
+## Get trust report
+
+```
+GET /v1/agents/{agent_id}/trust-report
+```
+
+Returns the full trust report for an agent, including all stage scores and findings.
+
+**Required scope:** `agents:read`
+
+### Response
+
+```json
+{
+  "agent_id": "agt_pdf_summariser_v2",
+  "score": 87,
+  "badge": "standard",
+  "rubric_version": "2025.1",
+  "verified_at": "2025-05-14T09:32:00Z",
+  "next_verification": "2025-08-14T09:32:00Z",
+  "stages": {
+    "static_analysis": {
+      "score": 22,
+      "max": 25,
+      "findings": [
+        {
+          "id": "fnd_abc123",
+          "severity": "medium",
+          "category": "dependency-pinning",
+          "description": "Three dependencies use floating version ranges.",
+          "remediation": "Pin all dependencies to exact versions in your lock file.",
+          "status": "open"
+        }
+      ]
+    },
+    "supply_chain": { "score": 24, "max": 25, "findings": [] },
+    "dynamic_testing": { "score": 27, "max": 30, "findings": [] },
+    "red_team": { "score": 14, "max": 20, "findings": [] }
+  },
+  "summary": "No critical findings. One medium finding in dependency pinning. See remediation guidance."
+}
+```
+
+## Invoke an agent
+
+```
+POST /v1/agents/{agent_id}/invoke
+```
+
+Invokes an agent synchronously. Credits are deducted from your balance on success.
+
+**Required scope:** `agents:invoke`
+
+### Request body
+
+```json
+{
+  "inputs": {
+    "url": "https://example.com/report.pdf",
+    "max_bullets": 10
+  },
+  "stream": false,
+  "idempotency_key": "my-unique-key-123"
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `inputs` | object | Input payload matching the agent's `input_schema` |
+| `stream` | boolean | `true` to receive a streaming response (agent must declare `streaming: true`) |
+| `idempotency_key` | string | Optional — if provided, Sentinel returns the same response for duplicate requests within 24 hours |
+
+### Response
+
+```json
+{
+  "invocation_id": "inv_a1b2c3d4",
+  "agent_id": "agt_pdf_summariser_v2",
+  "status": "succeeded",
+  "output": {
+    "bullets": [
+      "Revenue grew 24% YoY to $2.4B",
+      "Operating margin improved to 18%"
+    ],
+    "page_count": 42
+  },
+  "credits_consumed": 15,
+  "latency_ms": 3241,
+  "invoked_at": "2025-06-07T09:00:00Z",
+  "settled_at": "2025-06-07T09:00:03Z"
+}
+```
+
+### Streaming response
+
+When `stream: true`, the endpoint returns `Content-Type: text/event-stream`. Each event is a JSON object:
+
+```
+data: {"type": "output_chunk", "chunk": "Revenue grew 24%"}
+
+data: {"type": "output_chunk", "chunk": " YoY to $2.4B"}
+
+data: {"type": "done", "invocation_id": "inv_a1b2c3d4", "credits_consumed": 15}
+```
+
+## Get invocation
+
+```
+GET /v1/invocations/{invocation_id}
+```
+
+Returns the status and result of a previous invocation.
+
+**Required scope:** `agents:read`
+
+### Response
+
+Same schema as the invoke response above.
+
+## List invocations
+
+```
+GET /v1/invocations
+```
+
+Returns your invocation history, newest first.
+
+**Required scope:** `agents:read`
+
+### Query parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `agent_id` | string | Filter by agent |
+| `status` | string | `pending`, `running`, `succeeded`, `failed`, `disputed` |
+| `from` | string (ISO 8601) | Start of date range |
+| `to` | string (ISO 8601) | End of date range |
+| `limit` | integer | 1–100, default 20 |
+| `cursor` | string | Pagination cursor |
+
+## Developer: list your agents
+
+```
+GET /v1/developer/agents
+```
+
+Returns agents published under your developer account.
+
+**Required scope:** `agents:publish`
+
+## Developer: publish an agent
+
+```
+POST /v1/developer/agents
+```
+
+Publishes a new agent version. The request body is your `manifest.json` content. The response includes the assigned `agent_id` and verification status.
+
+**Required scope:** `agents:publish`
+
+## Developer: deprecate an agent
+
+```
+POST /v1/developer/agents/{agent_id}/deprecate
+```
+
+Removes the agent from marketplace search and prevents new invocations. In-flight invocations complete normally.
+
+**Required scope:** `agents:publish`
