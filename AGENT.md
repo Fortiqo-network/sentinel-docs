@@ -91,3 +91,14 @@ When adding or editing documentation:
 3. Every MDX page must start with `---\ntitle: "..."\ndescription: "..."\n---`.
 4. Verify all code examples are runnable (tested against the current SDK/API version).
 5. Run `mintlify dev` locally to confirm the page renders without errors.
+
+## Conventions
+
+### Commits
+- Use **Conventional Commits**: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `perf:`, `build:`, `ci:` — optional scope, e.g. `fix(auth): reject expired tokens`.
+- The message describes the change only. **Never** reference AI assistants, agents, or tooling, and never add `Co-Authored-By` or other attribution trailers.
+
+### Code style
+- **No inline comments.** Make intent obvious through precise names and small, single-purpose functions.
+- Document with **docstrings** (Python) / **JSDoc** (TypeScript) on modules, classes, and public/exported functions only — explain *why*, not *what*.
+- If a line feels like it needs a comment, rename or refactor until it doesn't.
