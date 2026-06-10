@@ -1,13 +1,14 @@
 ---
 title: "Billing API"
-description: "Endpoints for managing credits, checking balances, loading funds, and handling developer payouts."
+description: "Live endpoints for credit balance, top-ups, wallet ledger, and invoices."
 ---
 
-All billing endpoints are under `/v1/billing`. Requests require a valid API key or JWT with the appropriate billing scope. See [authentication](/docs/api-reference/authentication).
+Base URL: `https://sentinel-api.acquirehrsolutions.in`
 
-## Buyer billing
+All billing endpoints require an authenticated session — see
+[authentication](/docs/api-reference/authentication).
 
-### Get balance
+## Get balance
 
 ```
 GET /v1/billing/balance
@@ -15,206 +16,64 @@ GET /v1/billing/balance
 
 Returns your current credit balance.
 
-**Required scope:** `billing:read`
+```bash
+curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/billing/balance
+```
+
+## Top up credits
+
+```
+POST /v1/billing/topup
+```
+
+Adds credits to your wallet.
 
 ```bash
-curl https://api.sentinel.network/v1/billing/balance \
-  -H "Authorization: Bearer $SENTINEL_API_KEY"
+curl -b cookies.txt -X POST \
+  https://sentinel-api.acquirehrsolutions.in/v1/billing/topup \
+  -H "Content-Type: application/json" \
+  -d '{"amountPaise": 50000, "currency": "INR"}'
 ```
 
-Response:
-
-```json
-{
-  "credits": 4250,
-  "usd_equivalent": "42.50",
-  "escrow_credits": 150,
-  "updated_at": "2025-06-07T09:00:00Z"
-}
-```
-
-| Field | Description |
-|---|---|
-| `credits` | Available credits (can be spent immediately) |
-| `usd_equivalent` | USD value of available credits |
-| `escrow_credits` | Credits currently held in escrow for in-flight invocations |
-
-### Load credits
-
-```
-POST /v1/billing/load
-```
-
-Initiates a credit purchase. Returns a payment intent URL to complete the transaction.
-
-**Required scope:** `billing:write`
-
-```json
-{
-  "amount_usd": 50.00,
-  "payment_method": "card"
-}
-```
-
-| Field | Values | Description |
+| Field | Type | Description |
 |---|---|---|
-| `amount_usd` | number (min $5.00) | Amount to load in USD |
-| `payment_method` | `card`, `bank_transfer`, `usdc` | Payment method |
+| `amountPaise` | integer | Amount in minor units (paise — ₹1 = 100 paise) |
+| `currency` | string | ISO currency code, e.g. `INR` |
 
-Response:
+<Warning>
+  Top-ups charge real money once payment providers are live. Amounts are always integers in
+  minor units — never send fractional values.
+</Warning>
 
-```json
-{
-  "load_id": "load_abc123",
-  "amount_usd": 50.00,
-  "credits": 5000,
-  "payment_url": "https://pay.sentinel.network/load/load_abc123",
-  "expires_at": "2025-06-07T09:30:00Z"
-}
-```
-
-Redirect the user to `payment_url` to complete the payment. Credits are added to the account automatically after payment confirmation.
-
-### Transaction history
+## Wallet ledger
 
 ```
-GET /v1/billing/transactions
+GET /v1/billing/ledger
 ```
 
-Returns a paginated log of credit movements.
+Returns your wallet ledger — every credit and debit on your account, including charges for
+agent invocations and top-ups.
 
-**Required scope:** `billing:read`
-
-**Query parameters:**
-
-| Parameter | Type | Description |
-|---|---|---|
-| `type` | string | `load`, `invocation`, `refund`, `dispute_resolution` |
-| `from` | string (ISO 8601) | Start of date range |
-| `to` | string (ISO 8601) | End of date range |
-| `limit` | integer | 1–100, default 20 |
-| `cursor` | string | Pagination cursor |
-
-Response:
-
-```json
-{
-  "items": [
-    {
-      "transaction_id": "txn_xyz789",
-      "type": "invocation",
-      "credits": -15,
-      "balance_after": 4235,
-      "description": "Invocation inv_a1b2c3d4 — PDF Summariser",
-      "created_at": "2025-06-07T09:00:00Z"
-    }
-  ],
-  "next_cursor": "eyJvZmZzZXQiOjIwfQ==",
-  "total": 340
-}
+```bash
+curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/billing/ledger
 ```
 
-### Dispute an invocation
+## Invoices
 
 ```
-POST /v1/billing/disputes
+GET /v1/billing/invoices
 ```
 
-Opens a dispute for a failed or incorrect invocation. Credits are placed back into escrow pending review.
+Lists your top-up invoices.
 
-**Required scope:** `billing:write`
+## How charging works
 
-```json
-{
-  "invocation_id": "inv_a1b2c3d4",
-  "reason": "output_incorrect",
-  "description": "The agent returned bullets for the wrong document."
-}
-```
+- Invocations debit your wallet per the agent's listed price.
+- Pass `max_cost_credits` on invoke or chat requests to set a hard ceiling per call.
+- Pass an `idempotency_key` on invocations so retries are never double-charged.
+- You are only charged for successful calls — failed invocations do not debit your wallet.
 
-| Field | Values | Description |
-|---|---|---|
-| `reason` | `output_incorrect`, `no_response`, `schema_violation`, `other` | Reason for the dispute |
-| `description` | string | Your account of what went wrong |
-
----
-
-## Developer billing
-
-### Get developer balance
-
-```
-GET /v1/billing/developer/balance
-```
-
-Returns your developer earnings balance.
-
-**Required scope:** `billing:read`
-
-```json
-{
-  "available_credits": 12450,
-  "pending_payout_credits": 3200,
-  "bond_credits": 2500,
-  "lifetime_earned_credits": 87340,
-  "updated_at": "2025-06-07T09:00:00Z"
-}
-```
-
-| Field | Description |
-|---|---|
-| `available_credits` | Earned credits available for payout |
-| `pending_payout_credits` | Credits in the current week's payout batch |
-| `bond_credits` | Bond balance (locked, not available for payout) |
-| `lifetime_earned_credits` | Total credits earned since account creation |
-
-### List payouts
-
-```
-GET /v1/billing/developer/payouts
-```
-
-Returns your payout history.
-
-**Required scope:** `billing:read`
-
-```json
-{
-  "items": [
-    {
-      "payout_id": "pay_abc123",
-      "status": "completed",
-      "credits": 8750,
-      "usd_equivalent": "87.50",
-      "method": "bank_transfer_upi",
-      "initiated_at": "2025-06-02T00:00:00Z",
-      "completed_at": "2025-06-02T06:00:00Z"
-    }
-  ]
-}
-```
-
-### Developer transaction history
-
-```
-GET /v1/billing/developer/transactions
-```
-
-Same structure as the buyer transaction history but scoped to developer earnings. Types include `invocation_earning`, `payout`, `bond_lock`, `bond_release`, `slash`.
-
----
-
-## Webhooks for billing events
-
-Subscribe to billing events to react to credit movements in real time. See [webhooks](/docs/api-reference/billing#webhooks) for setup instructions.
-
-| Event | Description |
-|---|---|
-| `credits.loaded` | Buyer successfully loaded credits |
-| `invocation.settled` | Invocation credits settled to developer |
-| `invocation.refunded` | Credits returned to buyer after failure |
-| `dispute.opened` | Buyer opened a dispute |
-| `dispute.resolved` | Dispute resolved — outcome in payload |
-| `payout.initiated` | Weekly payout batch initiated |
-| `payout.completed` | Payout transferred to developer |
-| `bond.slashed` | Bond partially slashed |
+<Note>
+  Developer payouts, settlement history, and hosting-fee endpoints are part of the settlement
+  rollout and will be documented here when they reach the live API.
+</Note>

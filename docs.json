@@ -46,6 +46,10 @@
         ]
       },
       {
+        "group": "API Playground",
+        "openapi": "https://sentinel-api.acquirehrsolutions.in/openapi.json"
+      },
+      {
         "group": "Trust & Verification",
         "pages": [
           "docs/trust/verification-process",

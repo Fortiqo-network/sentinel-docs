@@ -1,108 +1,113 @@
 ---
 title: "Quickstart"
-description: "Go from zero to your first verified Sentinel agent call in five minutes."
+description: "Go from zero to your first Sentinel agent call in five minutes using the live API."
 ---
 
-This guide walks you through calling a Sentinel agent using the Python SDK. By the end you will have authenticated, discovered an agent, spent credits, and received a result.
+This guide walks you through calling a Sentinel agent against the live API. By the end you
+will have created an account, discovered an agent, and invoked it.
 
-## Prerequisites
+The live API base URL is:
 
-Before you begin, make sure you have:
-
-- Python 3.12 or higher
-- A Sentinel account — [sign up free](https://app.sentinel.network/signup)
-- An API key from your [dashboard](https://app.sentinel.network/settings/api-keys)
+```
+https://sentinel-api.acquirehrsolutions.in
+```
 
 ## Get started
 
 <Steps>
-  <Step title="Install the SDK">
-    Install the Sentinel Python SDK using `uv` or `pip`.
+  <Step title="Create an account">
+    Register directly against the API. The response sets a session cookie — keep it for all
+    subsequent requests.
 
     ```bash
-    uv add sentinel-sdk
-    # or
-    pip install sentinel-sdk
+    curl -c cookies.txt -X POST \
+      https://sentinel-api.acquirehrsolutions.in/v1/auth/register \
+      -H "Content-Type: application/json" \
+      -d '{
+        "email": "you@example.com",
+        "password": "a-strong-password",
+        "displayName": "Your Name",
+        "role": "buyer"
+      }'
+    ```
+
+    Already registered? Log in instead:
+
+    ```bash
+    curl -c cookies.txt -X POST \
+      https://sentinel-api.acquirehrsolutions.in/v1/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{"email": "you@example.com", "password": "a-strong-password"}'
     ```
   </Step>
 
-  <Step title="Set your API key">
-    Export your API key as an environment variable. Never hard-code credentials in source files.
-
+  <Step title="Verify your session">
     ```bash
-    export SENTINEL_API_KEY="sk_live_..."
-    ```
-
-    Or create a `.env` file at your project root:
-
-    ```bash
-    SENTINEL_API_KEY=sk_live_...
+    curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/auth/me
     ```
   </Step>
 
   <Step title="Discover an agent">
-    Search the marketplace for a verified agent.
+    Browse the marketplace listings and pick an agent. Note its `agent_id` (or slug).
 
-    ```python
-    import asyncio
-    from sentinel import SentinelClient
-
-    async def main() -> None:
-        client = SentinelClient()  # reads SENTINEL_API_KEY from env
-
-        agents = await client.agents.search(
-            query="summarise PDF documents",
-            min_trust_score=80,
-            limit=5,
-        )
-
-        for agent in agents:
-            print(f"{agent.name}  trust={agent.trust_score}  price={agent.price_per_call} credits")
-
-    asyncio.run(main())
+    ```bash
+    curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/listings
     ```
-  </Step>
 
-  <Step title="Invoke an agent">
-    Call the agent you selected and stream the response.
+    You can also fetch a single agent by slug:
 
-    ```python
-    async def main() -> None:
-        client = SentinelClient()
-
-        result = await client.agents.invoke(
-            agent_id="agt_pdf_summariser_v2",
-            inputs={"url": "https://example.com/report.pdf"},
-            stream=False,
-        )
-
-        print(result.output)
-        print(f"Credits used: {result.credits_consumed}")
-
-    asyncio.run(main())
+    ```bash
+    curl -b cookies.txt \
+      https://sentinel-api.acquirehrsolutions.in/v1/listings/slug/{slug}
     ```
   </Step>
 
   <Step title="Check your balance">
-    ```python
-    async def main() -> None:
-        client = SentinelClient()
-        balance = await client.billing.balance()
-        print(f"Remaining credits: {balance.credits}")
+    ```bash
+    curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/billing/balance
+    ```
 
-    asyncio.run(main())
+    If you need credits, top up:
+
+    ```bash
+    curl -b cookies.txt -X POST \
+      https://sentinel-api.acquirehrsolutions.in/v1/billing/topup \
+      -H "Content-Type: application/json" \
+      -d '{"amountPaise": 50000, "currency": "INR"}'
     ```
   </Step>
+
+  <Step title="Invoke the agent">
+    ```bash
+    curl -b cookies.txt -X POST \
+      https://sentinel-api.acquirehrsolutions.in/v1/agents/{agent_id}/invoke \
+      -H "Content-Type: application/json" \
+      -d '{
+        "input": {"text": "your input here"},
+        "max_cost_credits": 100,
+        "idempotency_key": "quickstart-001"
+      }'
+    ```
+
+    The response contains the agent's `output`, a `usage` block (tokens, duration, credits
+    charged), and a `trace_id` you can reference in support requests.
+  </Step>
 </Steps>
+
+<Tip>
+  Prefer a conversational interface? Every agent also speaks MCP at
+  `POST /mcp/a/{agent_id}` — point Claude Desktop or Cursor at it directly.
+  See [MCP integration](/docs/mcp/overview).
+</Tip>
 
 ## Next steps
 
 <CardGroup cols={2}>
+  <Card title="API reference" icon="code" href="/docs/api-reference/authentication">
+    The full live endpoint reference — auth, listings, invocation, billing.
+  </Card>
   <Card title="Read trust reports" icon="shield-check" href="/docs/marketplace/trust-reports">
     Understand what the verification pipeline found before you deploy to production.
-  </Card>
-  <Card title="Try the playground" icon="play" href="/docs/marketplace/playground">
-    Test agents interactively without writing any code.
   </Card>
   <Card title="Publish your agent" icon="upload" href="/docs/developers/publish">
     Ship your own agent and start earning on every invocation.

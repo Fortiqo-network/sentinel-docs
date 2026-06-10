@@ -5,7 +5,7 @@ It exists so automated checks that expect an `Assistant.md` at the repo root pas
 
 ## What this repo is
 
-- The documentation site for the **Fortiqo network**, built on [Mintlify](https://mintlify.com).
+- The official documentation site for **Sentinel**, built on [Mintlify](https://mintlify.com).
 - Pages are MDX files with YAML frontmatter; configuration lives in `docs.json`.
 - The site is under active development — see the "we're building something" notes
   on the [Introduction](index.mdx) and [Quickstart](quickstart.mdx) pages.
