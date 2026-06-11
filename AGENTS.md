@@ -72,3 +72,7 @@ When a new SDK version ships:
 | Trust rubric questions | trust@sentinel.network |
 | Security disclosures | security@sentinel.network |
 | Compliance and legal | legal@sentinel.network |
+
+## Docs & TODO (mandatory)
+- Every change updates its docs in the **same commit**: this `CLAUDE.md`/`AGENT.md`, the relevant README/`docs/`, and the **central TODO board** at `sentinal-core-api/master-doc/` (this module's `*-todo.md` plus `platform-todo.md`). Tick completed items (`[ ]`→`[x]`) — **never delete a line**; add TODOs for follow-ups discovered.
+- **Each module follows its own implementation doc.** As planning moves, update that module's `docs/implementation.md` / `docs/architecture.md` / roadmap and the central TODO in the same commit, so plans and docs stay in lockstep with the code — every module owns and follows its own implementation.
