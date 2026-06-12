@@ -1,5 +1,14 @@
 # CLAUDE.md — Sentinel docs
 
+> **Operating rules — highest priority, read first.** These override convenience and apply to every change in this repo:
+> - **Data is sacred.** Never delete or edit existing records or tables. Corrections are new rows or status changes, never destructive. **Ask permission before deleting any table or data.**
+> - **The database is always Postgres.** Never substitute SQLite or another engine, including in tests.
+> - **Comments:** at most one line and only when genuinely needed — never comment uselessly. Prefer docstrings / JSDoc and keep them thorough and up to date.
+> - **Commits:** a single concise line. **Never push without explicit permission.**
+> - **Code:** clean, reusable, and good-smelling in every manner. Don't overengineer, don't invent requirements, make the smallest change that works, and recommend better approaches over the existing one.
+> - **Always work from a plan and keep in mind what we are building** (this repo's `docs/` and the platform docs).
+
+
 This is a Mintlify documentation site. Pages are MDX files with YAML frontmatter. Navigation and settings are in `docs.json`.
 
 ## Local preview
