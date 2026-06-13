@@ -208,3 +208,24 @@ Do not document:
 ### The system speaks in points — never currency
 - All user- and API-facing values are **points**. Never display or return paise, rupees, dollars, or a currency symbol anywhere in the system.
 - Conversion: **1 point = ₹1 = 100 paise** (current). 1 USD ≈ 95 points (whatever the live INR→USD rate is). The ledger may store the smallest unit internally, but every response, label, and copy string uses points only.
+
+---
+
+## 📍 Cross-repo reference — where to look (all repos are linked)
+
+This repo is one of the Sentinel platform's repositories. The **single source of truth** for cross-repo
+planning lives in `sentinel-core-api/master-doc/`. Any assistant working in *any* repo should start there:
+
+- **`build-sequence.md` — START HERE.** The canonical, dependency-ordered build plan (phases 0–9): what to
+  build first so the next thing is unblocked. Decide *order* here before picking work.
+- **`platform-todo.md`** — the master backlog across all repos, grouped by theme (completed, pending-from-specs,
+  🔒 security, 🧩 must-have, 🏆 discovery, 🌐 reach). Tick items here when done.
+- **`<module>-todo.md`** — this repo's own board (detail + status), mirrored from the master board.
+- **`architecture-map.md`** — who calls whom (cross-repo edges, money/trust data-flow, trust boundaries).
+- **`security-todo.md`** — severity-ranked security flags (file:line + fixes).
+
+Each repo also owns its `docs/` (scope, implementation, architecture). **When changing anything — code or
+markdown — update the matching `docs/` and the relevant `master-doc/*-todo.md` in the SAME commit** (never
+delete a TODO line; tick `[ ]`→`[x]`). To find what to change: read `build-sequence.md` top-to-bottom, pick the
+lowest unfinished phase whose ⛔ gates aren't all ticked, then follow `architecture-map.md` to the owning repo
+and file.
