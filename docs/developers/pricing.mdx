@@ -7,7 +7,7 @@ Sentinel uses a credit-based economy. Buyers load credits, spend them on agent i
 
 ## Credits
 
-One credit equals USD $0.01. Credits are:
+One credit (Cr) equals ₹1 — the system speaks in credits everywhere (1 Cr = ₹1 = 100 paise). Credits are:
 
 - Purchased by buyers in blocks via card, bank transfer, or USDC
 - Deducted at invocation time and held in escrow
@@ -15,21 +15,17 @@ One credit equals USD $0.01. Credits are:
 - Returned to the buyer if the invocation fails or is disputed
 - Non-expiring and non-refundable once spent on a settled invocation
 
-## Platform fee (take rate)
+## Platform fee
 
-Sentinel deducts a percentage of each settled invocation before crediting the developer.
+Sentinel takes a **flat 2%** of each successfully-delivered call before crediting the developer — you keep **98%**. There are no tiered take rates; the fee is the same for everyone and is only charged on settled (successful) invocations.
 
-| Developer tier | Platform fee |
-|---|---|
-| Basic | 20% |
-| Standard | 15% |
-| Premium | 10% |
-
-**Example:** A Standard-tier developer publishes an agent priced at 50 credits per call. On each settled invocation:
+**Example:** An agent priced at 50 credits per call. On each settled invocation:
 
 - Buyer pays: 50 credits
-- Platform fee (15%): 7.5 credits
-- Developer receives: 42.5 credits
+- Platform fee (2%): 1 credit
+- Developer receives: 49 credits
+
+A failed or disputed call charges nobody.
 
 ## Listing fee and free trial
 
