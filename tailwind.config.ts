@@ -2,10 +2,16 @@ import type { Config } from "tailwindcss";
 
 /** Cinematic Sentinel palette — mirrors sentinel-frontend design tokens. */
 const config: Config = {
+  darkMode: "class",
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
+        bg: "rgb(var(--bg) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        surface2: "rgb(var(--surface2) / <alpha-value>)",
+        fg: "rgb(var(--fg) / <alpha-value>)",
+        hair: "rgb(var(--hair) / <alpha-value>)",
         ink: {
           950: "#0B0C0F",
           900: "#0E1014",

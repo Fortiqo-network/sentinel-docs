@@ -2,14 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light theme (default) — overridden by .dark on <html>. */
+:root {
+  --bg: 255 255 255;
+  --surface: 244 244 242;
+  --surface2: 250 250 248;
+  --fg: 24 26 31;
+  --hair: 24 26 31;
+}
+
+.dark {
+  --bg: 11 12 15;
+  --surface: 17 19 24;
+  --surface2: 14 16 20;
+  --fg: 236 234 227;
+  --hair: 236 234 227;
+}
+
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #0b0c0f;
-  color: #eceae3;
+  background-color: rgb(var(--bg));
+  color: rgb(var(--fg));
   -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth theme transition across text, surfaces, and borders. */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    fill 0.25s ease;
 }
 
 /* ── Docs syntax highlighting (rehype-highlight / hljs) — cinematic dark ── */

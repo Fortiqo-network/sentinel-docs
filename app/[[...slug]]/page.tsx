@@ -64,24 +64,24 @@ export default async function DocPage({ params }: DocPageProps): Promise<React.J
 
         <article className="min-w-0 flex-1 lg:max-w-3xl">
           <p className="font-brand-mono text-xs uppercase tracking-[0.2em] text-gold">Documentation</p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-porcelain">{doc.title}</h1>
-          {doc.description && <p className="mt-2 text-porcelain/60">{doc.description}</p>}
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-fg">{doc.title}</h1>
+          {doc.description && <p className="mt-2 text-fg/60">{doc.description}</p>}
 
           <div className="mt-8 docs-content">{content}</div>
 
-          <nav className="mt-12 flex items-center justify-between gap-4 border-t border-porcelain/10 pt-6">
+          <nav className="mt-12 flex items-center justify-between gap-4 border-t border-hair/10 pt-6">
             {prev ? (
               <Link href={prev.href} className="group text-left">
-                <span className="block text-xs text-porcelain/50">Previous</span>
-                <span className="font-medium text-porcelain group-hover:text-gold">{prev.title}</span>
+                <span className="block text-xs text-fg/50">Previous</span>
+                <span className="font-medium text-fg group-hover:text-gold">{prev.title}</span>
               </Link>
             ) : (
               <span />
             )}
             {next ? (
               <Link href={next.href} className="group text-right">
-                <span className="block text-xs text-porcelain/50">Next</span>
-                <span className="font-medium text-porcelain group-hover:text-gold">{next.title}</span>
+                <span className="block text-xs text-fg/50">Next</span>
+                <span className="font-medium text-fg group-hover:text-gold">{next.title}</span>
               </Link>
             ) : (
               <span />

@@ -31,18 +31,18 @@ export function DocsSidebar({ sections }: DocsSidebarProps): React.JSX.Element {
   const nav = (
     <nav className="space-y-6">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-porcelain/40" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg/40" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search docs…"
-          className="w-full rounded-lg border border-porcelain/15 bg-ink-800/60 py-2 pl-9 pr-3 text-sm text-porcelain placeholder:text-porcelain/40 focus:border-gold/50 focus:outline-none"
+          className="w-full rounded-lg border border-hair/15 bg-surface/60 py-2 pl-9 pr-3 text-sm text-fg placeholder:text-fg/40 focus:border-gold/50 focus:outline-none"
         />
       </div>
       {filtered.map((section) => (
         <div key={section.group}>
-          <p className="mb-2 font-brand-mono text-xs uppercase tracking-[0.16em] text-porcelain/45">
+          <p className="mb-2 font-brand-mono text-xs uppercase tracking-[0.16em] text-fg/45">
             {section.group}
           </p>
           <ul className="space-y-0.5">
@@ -57,7 +57,7 @@ export function DocsSidebar({ sections }: DocsSidebarProps): React.JSX.Element {
                       "block rounded-md px-3 py-1.5 text-sm transition-colors",
                       active
                         ? "bg-gold/15 font-medium text-gold"
-                        : "text-porcelain/65 hover:bg-porcelain/5 hover:text-porcelain",
+                        : "text-fg/65 hover:bg-fg/5 hover:text-fg",
                     )}
                   >
                     {link.title}
@@ -68,7 +68,7 @@ export function DocsSidebar({ sections }: DocsSidebarProps): React.JSX.Element {
           </ul>
         </div>
       ))}
-      {filtered.length === 0 && <p className="text-sm text-porcelain/40">No matches.</p>}
+      {filtered.length === 0 && <p className="text-sm text-fg/40">No matches.</p>}
     </nav>
   );
 
@@ -77,7 +77,7 @@ export function DocsSidebar({ sections }: DocsSidebarProps): React.JSX.Element {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-porcelain/15 bg-ink-800 px-4 py-2.5 text-sm text-porcelain shadow-lg lg:hidden"
+        className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-hair/15 bg-surface px-4 py-2.5 text-sm text-fg shadow-lg lg:hidden"
       >
         <Menu className="h-4 w-4" /> Docs
       </button>
@@ -88,12 +88,12 @@ export function DocsSidebar({ sections }: DocsSidebarProps): React.JSX.Element {
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-ink-950/80 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-porcelain/10 bg-ink-900 p-5">
+          <div className="absolute inset-0 bg-bg/80 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-hair/10 bg-surface2 p-5">
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="mb-4 flex items-center gap-1 text-sm text-porcelain/60"
+              className="mb-4 flex items-center gap-1 text-sm text-fg/60"
             >
               <X className="h-4 w-4" /> Close
             </button>
