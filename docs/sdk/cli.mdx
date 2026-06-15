@@ -76,11 +76,11 @@ sentinel agent validate --manifest manifest.json
 ```
 
 ```
-✓ schema_version: 1.0
-✓ agent_id: pdf-summariser
-✓ input_schema: valid JSON Schema
-✓ output_schema: valid JSON Schema
-✓ data_handling: complete
+schema_version: 1.0
+agent_id: pdf-summariser
+input_schema: valid JSON Schema
+output_schema: valid JSON Schema
+data_handling: complete
 All checks passed.
 ```
 
@@ -96,13 +96,13 @@ sentinel agent verify --manifest manifest.json
 
 ```
 Running static analysis...
-  ✓ No secrets detected
-  ✓ No unsafe eval patterns
-  ⚠ medium  dependency-pinning  3 dependencies use floating version ranges
+  No secrets detected
+  No unsafe eval patterns
+  medium  dependency-pinning  3 dependencies use floating version ranges
 
 Running supply-chain audit...
-  ✓ No CVEs in dependency tree
-  ✓ All licenses compatible
+  No CVEs in dependency tree
+  All licenses compatible
 
 Local score estimate: 82/100  (dynamic and red-team stages require Sentinel sandbox)
 ```
@@ -136,8 +136,8 @@ sentinel agent publish --manifest manifest.json
 ```
 
 ```
-Validating manifest... ✓
-Uploading manifest...  ✓
+Validating manifest...
+Uploading manifest...
 Queued for verification (agent_id: agt_pdf_summariser_v2)
 Verification typically completes in 25–55 minutes.
 Watch progress: sentinel agent status agt_pdf_summariser_v2
