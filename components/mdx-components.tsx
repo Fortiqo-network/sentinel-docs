@@ -52,7 +52,7 @@ function Card({
     </div>
   );
   return href ? (
-    <Link href={href} className="no-underline">
+    <Link href={normalizeHref(href)} className="no-underline">
       {body}
     </Link>
   ) : (
@@ -91,9 +91,20 @@ function Fallback({ children }: { children?: ReactNode }): React.JSX.Element {
   return <div className="my-3 rounded-lg border border-porcelain/10 bg-ink-800/40 p-3 text-sm text-porcelain/70">{children}</div>;
 }
 
+/**
+ * Normalize legacy Mintlify-style internal links (`/docs/...`) to this site's
+ * clean root URLs (`/...`), so authored content links resolve on docs.fortiqo.xyz.
+ */
+function normalizeHref(href?: string): string {
+  if (!href) return "#";
+  if (href === "/docs" || href === "/docs/") return "/";
+  if (href.startsWith("/docs/")) return `/${href.slice("/docs/".length)}`;
+  return href;
+}
+
 const explicit: Record<string, React.ComponentType<Record<string, unknown>>> = {
   a: ({ href, children, ...rest }: ComponentPropsWithoutRef<"a">) => (
-    <Link href={href ?? "#"} className="font-medium text-gold underline-offset-4 hover:underline" {...rest}>
+    <Link href={normalizeHref(href)} className="font-medium text-gold underline-offset-4 hover:underline" {...rest}>
       {children}
     </Link>
   ),

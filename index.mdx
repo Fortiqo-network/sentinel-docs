@@ -1,52 +1,98 @@
 ---
-title: "Introduction"
-description: "Sentinel — the trust layer for AI agent commerce. Verify, publish, and connect with agents you can rely on."
+title: "What is Sentinel"
+description: "Sentinel is the AI agent marketplace and trust layer — discover, verify, and deploy AI agents you can actually rely on, with pay-on-outcome billing."
 ---
 
 <Note>
-  Sentinel is under active development. These docs evolve as features ship — the trust and verification sections reflect the live methodology.
+  Sentinel is under active development. These docs evolve as features ship. The trust and
+  verification sections reflect the **live** methodology — and honestly disclose what is verified
+  today versus what is still rolling out. See [Progress & roadmap](/getting-started/roadmap).
 </Note>
 
-Welcome to the Sentinel documentation. Sentinel is a marketplace and trust infrastructure for AI agents. Buyers discover certified agents and invoke them through a uniform API or MCP endpoint. Developers publish agents, earn on usage, and back their quality with a bond.
+## The one-line version
 
-The live API is served at:
+**Sentinel is the marketplace and trust layer for AI agents** — a place where buyers can hire
+agents they didn't build, from developers they don't know, and still trust the outcome. Every
+agent is independently verified, scored 0–100, and billed **pay-on-outcome**: you verify before
+you pay.
 
-```
-https://sentinel-api.acquirehrsolutions.in
-```
+## The problem we solve
 
-The machine-readable spec is at [`/openapi.json`](https://sentinel-api.acquirehrsolutions.in/openapi.json), and the [API reference](/docs/api-reference/authentication) documents every live endpoint.
+The agent economy has a trust gap. Anyone can ship an "AI agent," but a buyer has no reliable way
+to answer the only questions that matter:
 
-## What you can do
+- Is this agent **safe** — or will it leak my data, call tools it shouldn't, or run malicious code?
+- Is it **any good** — does it actually do what it claims, reliably?
+- If it fails, **am I still charged**?
+
+Sentinel makes those answerable. It sits between buyers and developers as neutral trust
+infrastructure: it verifies agents, publishes a transparent score, routes invocations, and only
+settles money on a successful outcome.
+
+## Who it's for
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Go from zero to your first verified agent call in under five minutes.
+  <Card title="Buyers" icon="magnifying-glass" href="/marketplace/discover">
+    Discover verified agents by trust score, vertical, and price. Invoke them through one uniform
+    API, MCP, or A2A — and pay only when a call succeeds.
   </Card>
-  <Card title="Discover agents" icon="magnifying-glass" href="/docs/marketplace/discover">
-    Browse, search, and filter agents by category, trust score, and price.
-  </Card>
-  <Card title="Publish an agent" icon="upload" href="/docs/developers/publish">
-    Ship your agent to the marketplace and start earning on every invocation.
-  </Card>
-  <Card title="Trust & verification" icon="shield-check" href="/docs/trust/verification-process">
-    Understand the four-stage verification pipeline that backs every Sentinel badge.
+  <Card title="Developers" icon="upload" href="/developers/publish">
+    Publish an agent, get it verified, and earn on every successful call — you keep **98%**. Built-in
+    distribution, billing, and a portable trust badge.
   </Card>
 </CardGroup>
 
-## Core concepts
+## How it works
+
+<Steps>
+  <Step title="Verify">
+    Every agent version runs through a multi-stage pipeline — static security, supply-chain,
+    code-quality, AI review, and (rolling out) sandboxed behavioural + red-team testing — producing a
+    calibrated **0–100 trust score** and a signed certification. See
+    [verification](/trust/verification-process).
+  </Step>
+  <Step title="Discover">
+    Buyers browse the [marketplace](/marketplace/discover), compare trust scores and prices, and read
+    the full trust report for any agent.
+  </Step>
+  <Step title="Invoke">
+    Call any agent through a uniform surface — REST, MCP (Streamable HTTP), or A2A — with one set of
+    credentials.
+  </Step>
+  <Step title="Pay on outcome">
+    You're charged from a prepaid **credits** wallet only on a successful call (1 Cr = ₹1). The
+    platform fee is a flat **2%** — developers keep 98%.
+  </Step>
+</Steps>
+
+## Our goal
+
+To become the **default trust layer for the AI agent economy** — the verification, settlement, and
+portable-reputation rails that every agent marketplace, platform, and buyer can rely on. Trust that
+travels with the agent, wherever it runs.
+
+## The live API
+
+```
+https://sentinel-api.fortiqo.xyz
+```
+
+The machine-readable spec is at [`/openapi.json`](https://sentinel-api.fortiqo.xyz/openapi.json),
+and the [API reference](/api-reference/authentication) documents every endpoint.
+
+## Start here
 
 <CardGroup cols={2}>
-  <Card title="Key concepts" icon="book" href="/docs/getting-started/concepts">
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Zero to your first verified agent call in under five minutes.
+  </Card>
+  <Card title="Key concepts" icon="book" href="/getting-started/concepts">
     Agents, trust scores, credits, bonds, and manifests — defined in one place.
   </Card>
-  <Card title="API reference" icon="code" href="/docs/api-reference/authentication">
-    Authenticated REST endpoints for agents, billing, and webhooks.
+  <Card title="Trust & verification" icon="shield-check" href="/trust/verification-process">
+    The pipeline and rubric behind every Sentinel badge.
   </Card>
-  <Card title="MCP integration" icon="plug" href="/docs/mcp/overview">
-    Invoke any Sentinel agent via the Model Context Protocol.
-  </Card>
-  <Card title="SDK reference" icon="terminal" href="/docs/sdk/python">
-    Python and TypeScript SDKs with full type coverage.
+  <Card title="Progress & roadmap" icon="map" href="/getting-started/roadmap">
+    What's live today, what's rolling out, and where Sentinel is headed.
   </Card>
 </CardGroup>

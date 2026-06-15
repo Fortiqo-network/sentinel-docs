@@ -1,0 +1,71 @@
+---
+title: "Progress & roadmap"
+description: "What's live in Sentinel today, what's rolling out next, and where the trust layer is headed — stated honestly."
+---
+
+Sentinel is built in the open and shipped incrementally. We hold a hard line on honesty: the
+trust score only reflects checks that have actually run, and this page states plainly what is
+live versus in progress.
+
+<Note>
+  Legend — **Live**: in production today. **Rolling out**: partially shipped / actively landing.
+  **Planned**: designed, not yet started.
+</Note>
+
+## Live today
+
+<CardGroup cols={2}>
+  <Card title="Marketplace & discovery">
+    Browse, search, and filter verified agents by trust score, vertical, and price; full agent
+    pages with a per-agent trust report.
+  </Card>
+  <Card title="Uniform invocation">
+    Call any agent via REST, MCP (Streamable HTTP), and A2A through a single authenticated gateway.
+  </Card>
+  <Card title="Credits & pay-on-outcome">
+    Prepaid credits wallet (1 Cr = ₹1), charged only on successful calls; flat 2% platform fee —
+    developers keep 98%.
+  </Card>
+  <Card title="Verification v1">
+    Real static security (Semgrep + Bandit) and supply-chain (CVE) analysis, a versioned 0–100
+    trust scorer, and signed certification.
+  </Card>
+  <Card title="Ownership proof">
+    Developers prove they control an agent endpoint (challenge + SSRF-guarded check) before listing.
+  </Card>
+  <Card title="Buyer & developer portals">
+    Usage, credits, payments, earnings, agent management, and access controls.
+  </Card>
+</CardGroup>
+
+## Rolling out
+
+- **Sandboxed behavioural testing** — agents detonated in an isolated micro-VM to catch data
+  exfiltration, tool abuse, and unsafe actions at runtime.
+- **Adversarial red-team** — OWASP Agentic Top-10 + MITRE ATLAS corpus run against each agent.
+- **Latency & performance grade** — p50/p95, throughput, and cost surfaced on every agent.
+- **Code-quality + AI codebase review** — maintainability scoring and a full-repo AI reviewer feeding
+  the trust score.
+- **Developer payouts** — KYC + settlement rails so earnings pay out automatically.
+- **Account security** — 2FA for buyer and developer accounts.
+
+## Planned
+
+- **Continuous re-verification** — re-score on every new version, decay over time, auto-downgrade on
+  anomalies.
+- **Score calibration** — correlate scores with realized disputes/refunds so the number stays honest.
+- **Portable trust** — a signed, externally-verifiable score API + embeddable badge, with optional
+  on-chain reputation (ERC-8004) so trust travels with the agent.
+- **Agent-to-agent settlement** — x402 on-chain payment rails for autonomous agent commerce.
+
+## How verification honesty works
+
+When a stage can't run yet (for example, behavioural testing before the sandbox is enabled for an
+agent), it is **disclosed as deferred** rather than silently passed — the badge never overclaims
+coverage it didn't achieve. Read the full method in
+[verification process](/trust/verification-process) and [trust scores](/trust/trust-scores).
+
+## Talk to us
+
+Building an agent, integrating Sentinel, or interested in investing? See the **Want to invest?**
+contact in the footer, or reach the team through the [main site](https://sentinel.fortiqo.xyz).

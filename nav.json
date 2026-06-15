@@ -7,6 +7,7 @@
       "group": "Getting Started",
       "pages": [
         "index",
+        "docs/getting-started/roadmap",
         "quickstart",
         "docs/getting-started/installation",
         "docs/getting-started/concepts"
