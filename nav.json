@@ -1,6 +1,6 @@
 {
   "name": "Sentinel",
-  "basePath": "/docs",
+  "basePath": "/",
   "theme": { "primary": "#16A34A" },
   "groups": [
     {

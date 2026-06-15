@@ -9,20 +9,20 @@
 > - **Always work from a plan and keep in mind what we are building** (this repo's `docs/` and the platform docs).
 
 
-This is a **markdown-only content repository**. There is no build or runtime here — pages are
-plain markdown (`.md`/`.mdx`) with YAML frontmatter, and navigation lives in `nav.json`. The
-content is rendered at **https://sentinel.fortiqo.xyz/docs** by the **sentinel-frontend** docs
-framework (Mintlify-like: sidebar, TOC, search, callouts, code highlighting). **Mintlify has been
-removed** — do not reintroduce `docs.json` or any docs build tool.
+This is a **standalone Next.js documentation site** — markdown content (`.md`/`.mdx` + YAML
+frontmatter) rendered by a thin in-repo renderer (`app/`, `components/`, `lib/`). Navigation lives
+in `nav.json`. It deploys as its **own Vercel project** to **https://docs.fortiqo.xyz**. **Mintlify
+has been removed** — do not reintroduce `docs.json` or any third-party docs build tool.
+
+Layout: `app/[[...slug]]/page.tsx` (renders any nav page) · `app/layout.tsx` (shell) ·
+`lib/docs.ts` (loads markdown + nav) · `components/{mdx-components,DocsSidebar,DocsToc}.tsx`.
+Content authoring is unchanged — write markdown, list it in `nav.json`.
 
 ## Local preview
 
-Preview through the frontend, which reads this repo at build time:
-
 ```bash
-cd ../sentinel-frontend
-# SENTINEL_DOCS_PATH defaults to ../sentinel-docs
-npm run dev      # docs render at http://localhost:3000/docs
+bun install
+bun run dev      # http://localhost:3000
 ```
 
 ## Adding a page
@@ -292,17 +292,16 @@ of the DB schema 500s every query that hits the changed table (this has bitten u
 
 ---
 
-## 📚 Docs framework — markdown-only, rendered by the frontend (2026-06-15)
+## 📚 Docs framework — standalone markdown site at docs.fortiqo.xyz (2026-06-15)
 
-Platform documentation is **markdown-only** and lives in **sentinel-docs** (the content
-source of truth). It is rendered at **https://sentinel.fortiqo.xyz/docs** by the
-**sentinel-frontend** docs framework (Mintlify-like: sidebar, TOC, search, callouts, code).
+Platform documentation is **markdown-first** and lives in **sentinel-docs**, which is a
+self-contained Next.js app that renders its own markdown. It is published as a **standalone
+site at https://docs.fortiqo.xyz** (its own Vercel project + Cloudflare DNS) — NOT inside
+sentinel-frontend.
 
-- **Mintlify is removed.** Do NOT reintroduce `docs.json`/Mintlify or any separate docs
-  build/runtime. sentinel-docs ships markdown (`.md`/`.mdx`) + a `nav.json` manifest only.
-- **Single source of truth:** never duplicate doc content into the frontend. The frontend
-  reads markdown from sentinel-docs at build time via `SENTINEL_DOCS_PATH` (default the
-  monorepo sibling `../sentinel-docs`); nav comes from `nav.json`.
-- **Adding/editing a doc page:** put the markdown in sentinel-docs and add its slug to
-  `nav.json`; the frontend renders it automatically. Track work in
-  `master-doc/docs-todo.md` (tick/append only — never delete a line).
+- **Mintlify is removed.** Do NOT reintroduce `docs.json`/Mintlify. sentinel-docs ships
+  markdown (`.md`/`.mdx`) + a `nav.json` manifest, rendered by its own `app/` renderer.
+- **Adding/editing a doc page:** add the `.md`/`.mdx` under sentinel-docs and list its slug in
+  `nav.json`; the site renders it automatically on the next build.
+- `sentinel.fortiqo.xyz/docs` redirects to `docs.fortiqo.xyz`.
+- Track docs work in `master-doc/docs-todo.md` (tick/append only — never delete a line).

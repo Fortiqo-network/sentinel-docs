@@ -1,14 +1,18 @@
 # sentinel-docs
 
-Public documentation site for the [Sentinel](https://sentinel.network) platform — the trust layer for AI agent commerce.
+Public documentation site for the [Sentinel](https://sentinel.fortiqo.xyz) platform — the trust layer for AI agent commerce.
 
-Built with [Mintlify](https://mintlify.com). Deployed automatically to [docs.sentinel.network](https://docs.sentinel.network) on every push to `main`.
+A **standalone Next.js site** (markdown content + a thin in-repo renderer). Deployed as its own
+Vercel project to [docs.fortiqo.xyz](https://docs.fortiqo.xyz). **Mintlify has been removed.**
 
 ## Structure
 
 ```
-sentinal-docs/
-├── docs.json                        # Mintlify configuration — nav, branding, settings
+sentinel-docs/
+├── nav.json                         # Navigation manifest (groups + page order)
+├── app/                             # Next renderer: [[...slug]] page, layout, globals.css
+├── components/                      # mdx-components, DocsSidebar, DocsToc
+├── lib/                             # docs loader (lib/docs.ts) + cn util
 ├── index.mdx                        # Home page
 ├── quickstart.mdx                   # Five-minute quickstart
 ├── docs/
@@ -50,31 +54,23 @@ sentinal-docs/
 
 ## Local development
 
-Install the Mintlify CLI:
-
 ```bash
-npm install -g mintlify
+bun install
+bun run dev      # http://localhost:3000
 ```
-
-Preview locally:
-
-```bash
-mintlify dev
-```
-
-View at [http://localhost:3000](http://localhost:3000).
 
 ## Adding pages
 
-1. Create an `.mdx` file in the appropriate `docs/` subdirectory.
-2. Add the page path to the relevant group in `docs.json` under `navigation.pages`.
+1. Create a `.md` (or `.mdx` for callout components) file under `docs/`.
+2. Add its path (without extension) to the relevant group in `nav.json`.
 3. Use sentence case headings, active voice, and second person throughout.
 
-See [CLAUDE.md](./CLAUDE.md) for full Mintlify conventions.
+See [CLAUDE.md](./CLAUDE.md) for full conventions.
 
 ## Deployment
 
-Deployment is automatic. Pushing to `main` triggers a Mintlify build and deploys to production. Pull requests get a preview deployment — the URL appears in the PR checks.
+Deployed as a standalone Vercel project (Root Directory = repo root, framework Next.js) mapped to
+`docs.fortiqo.xyz` via Cloudflare DNS. Pushing to `main` triggers a Vercel build; PRs get preview URLs.
 
 ## Related repositories
 

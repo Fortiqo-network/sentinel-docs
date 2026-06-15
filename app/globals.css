@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0b0c0f;
+  color: #eceae3;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Docs syntax highlighting (rehype-highlight / hljs) — cinematic dark ── */
+.docs-content .hljs-comment,
+.docs-content .hljs-quote {
+  color: #6b7280;
+  font-style: italic;
+}
+.docs-content .hljs-keyword,
+.docs-content .hljs-selector-tag,
+.docs-content .hljs-literal,
+.docs-content .hljs-built_in {
+  color: #e7a03c;
+}
+.docs-content .hljs-string,
+.docs-content .hljs-attr,
+.docs-content .hljs-template-tag {
+  color: #22c55e;
+}
+.docs-content .hljs-number,
+.docs-content .hljs-symbol {
+  color: #8193f8;
+}
+.docs-content .hljs-title,
+.docs-content .hljs-section,
+.docs-content .hljs-name {
+  color: #eceae3;
+  font-weight: 600;
+}
+.docs-content .hljs-meta,
+.docs-content .hljs-type,
+.docs-content .hljs-attribute {
+  color: #80848f;
+}
+.docs-content .hljs-deletion {
+  color: #ef4444;
+}
+.docs-content .hljs-addition {
+  color: #10b981;
+}

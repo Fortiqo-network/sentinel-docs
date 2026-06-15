@@ -1,9 +1,9 @@
-# Mintlify automatically ignores these files and directories:
-# .git, .github, .claude, .agents, .idea, node_modules,
-# README.md, LICENSE.md, CHANGELOG.md, CONTRIBUTING.md
-
-# Mintlify build output
-.mintlify/
+# Next.js build output
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+.vercel/
 
 # Node
 node_modules/
