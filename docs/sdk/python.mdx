@@ -3,6 +3,8 @@ title: "Python SDK"
 description: "Complete reference for the Sentinel Python SDK — installation, configuration, and every available method."
 ---
 
+<Note>**Status: in development.** The Sentinel SDK/CLI is not yet published to a public package registry. This page documents the *intended* interface — track availability on [Progress & roadmap](/getting-started/roadmap).</Note>
+
 The Sentinel Python SDK is an async-first, fully typed client for the Sentinel API. It requires Python 3.12 or higher.
 
 ## Install
@@ -41,7 +43,7 @@ from sentinel import SentinelClient, SentinelConfig
 
 config = SentinelConfig(
     api_key="sk_live_...",           # defaults to SENTINEL_API_KEY env var
-    base_url="https://api.sentinel.network/v1",  # override for staging
+    base_url="https://sentinel-api.fortiqo.xyz/v1",  # override for staging
     timeout_ms=30_000,               # request timeout in milliseconds
     max_retries=3,                   # automatic retry on 429 and 5xx
     log_level="warn",                # debug | info | warn | error

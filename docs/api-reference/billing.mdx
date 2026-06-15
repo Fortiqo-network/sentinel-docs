@@ -3,7 +3,7 @@ title: "Billing API"
 description: "Live endpoints for credit balance, top-ups, wallet ledger, and invoices."
 ---
 
-Base URL: `https://sentinel-api.acquirehrsolutions.in`
+Base URL: `https://sentinel-api.fortiqo.xyz`
 
 All billing endpoints require an authenticated session — see
 [authentication](/docs/api-reference/authentication).
@@ -17,7 +17,7 @@ GET /v1/billing/balance
 Returns your current credit balance.
 
 ```bash
-curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/billing/balance
+curl -b cookies.txt https://sentinel-api.fortiqo.xyz/v1/billing/balance
 ```
 
 ## Top up credits
@@ -30,7 +30,7 @@ Adds credits to your wallet.
 
 ```bash
 curl -b cookies.txt -X POST \
-  https://sentinel-api.acquirehrsolutions.in/v1/billing/topup \
+  https://sentinel-api.fortiqo.xyz/v1/billing/topup \
   -H "Content-Type: application/json" \
   -d '{"amountPaise": 50000, "currency": "INR"}'
 ```
@@ -55,7 +55,7 @@ Returns your wallet ledger — every credit and debit on your account, including
 agent invocations and top-ups.
 
 ```bash
-curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/billing/ledger
+curl -b cookies.txt https://sentinel-api.fortiqo.xyz/v1/billing/ledger
 ```
 
 ## Invoices

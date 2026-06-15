@@ -6,11 +6,11 @@ description: "Authenticate with the live Sentinel API using session-based auth."
 The Sentinel API is served by the public gateway:
 
 ```
-https://sentinel-api.acquirehrsolutions.in
+https://sentinel-api.fortiqo.xyz
 ```
 
 The interactive OpenAPI specification for the live surface is always available at
-[`/openapi.json`](https://sentinel-api.acquirehrsolutions.in/openapi.json).
+[`/openapi.json`](https://sentinel-api.fortiqo.xyz/openapi.json).
 
 ## Session authentication
 
@@ -24,7 +24,7 @@ POST /v1/auth/register
 ```
 
 ```bash
-curl -c cookies.txt -X POST https://sentinel-api.acquirehrsolutions.in/v1/auth/register \
+curl -c cookies.txt -X POST https://sentinel-api.fortiqo.xyz/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "you@example.com",
@@ -50,7 +50,7 @@ POST /v1/auth/login
 ```
 
 ```bash
-curl -c cookies.txt -X POST https://sentinel-api.acquirehrsolutions.in/v1/auth/login \
+curl -c cookies.txt -X POST https://sentinel-api.fortiqo.xyz/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email": "you@example.com", "password": "a-strong-password"}'
 ```
@@ -62,7 +62,7 @@ GET /v1/auth/me
 ```
 
 ```bash
-curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/auth/me
+curl -b cookies.txt https://sentinel-api.fortiqo.xyz/v1/auth/me
 ```
 
 Returns the authenticated user's profile. Use this to confirm your session is valid.

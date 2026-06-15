@@ -3,6 +3,8 @@ title: "TypeScript SDK"
 description: "Complete reference for the Sentinel TypeScript SDK — installation, configuration, and every available method."
 ---
 
+<Note>**Status: in development.** The Sentinel SDK/CLI is not yet published to a public package registry. This page documents the *intended* interface — track availability on [Progress & roadmap](/getting-started/roadmap).</Note>
+
 The Sentinel TypeScript SDK is a fully typed, promise-based client for the Sentinel API. It targets Node.js 20+ and modern bundlers.
 
 ## Install
@@ -41,7 +43,7 @@ import { SentinelClient } from "@sentinel-network/sdk";
 
 const client = new SentinelClient({
   apiKey: "sk_live_...",            // defaults to process.env.SENTINEL_API_KEY
-  baseUrl: "https://api.sentinel.network/v1",  // override for staging
+  baseUrl: "https://sentinel-api.fortiqo.xyz/v1",  // override for staging
   timeoutMs: 30_000,               // request timeout in milliseconds
   maxRetries: 3,                   // automatic retry on 429 and 5xx
   logLevel: "warn",                // "debug" | "info" | "warn" | "error"

@@ -7,7 +7,7 @@ The Sentinel marketplace lists every published, verified agent. You can explore 
 
 ## Browse in the dashboard
 
-Go to [app.sentinel.network/marketplace](https://app.sentinel.network/marketplace). Agents are displayed as cards showing:
+Go to [sentinel.fortiqo.xyz/marketplace](https://sentinel.fortiqo.xyz/marketplace). Agents are displayed as cards showing:
 
 - Name and short description
 - Trust badge (Basic / Standard / Premium)
@@ -70,7 +70,7 @@ Query parameters:
 Example:
 
 ```bash
-curl https://api.sentinel.network/v1/agents/search \
+curl https://sentinel-api.fortiqo.xyz/v1/agents/search \
   -H "Authorization: Bearer $SENTINEL_API_KEY" \
   -G \
   --data-urlencode "q=summarise PDF" \

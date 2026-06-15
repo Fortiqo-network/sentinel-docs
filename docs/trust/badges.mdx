@@ -3,6 +3,8 @@ title: "Badges"
 description: "Sentinel trust badge types, minimum score thresholds, and display guidelines for embedding badges in your documentation."
 ---
 
+<Note>**Status: planned.** Embeddable badge images (`badge.svg` below) are on the [roadmap](/getting-started/roadmap), not yet served. Live trust scores already appear on every agent page.</Note>
+
 Sentinel badges are visual certifications that communicate an agent's trust tier at a glance. Badges are computed automatically from the trust score and displayed on marketplace listings. Developers can also embed badges in external documentation and README files.
 
 ## Badge tiers
@@ -31,7 +33,7 @@ Each badge has a light and dark variant. They are SVG files served from Sentinel
 ### Markdown / GitHub README
 
 ```markdown
-[![Sentinel Premium](https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg)](https://sentinel.network/agents/agt_pdf_summariser_v2)
+[![Sentinel Premium](https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg)](https://sentinel.fortiqo.xyz/agents/agt_pdf_summariser_v2)
 ```
 
 The badge SVG updates automatically when the trust score changes. You do not need to update the URL when you publish a new version.
@@ -39,7 +41,7 @@ The badge SVG updates automatically when the trust score changes. You do not nee
 ### HTML
 
 ```html
-<a href="https://sentinel.network/agents/agt_pdf_summariser_v2">
+<a href="https://sentinel.fortiqo.xyz/agents/agt_pdf_summariser_v2">
   <img
     src="https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg"
     alt="Sentinel trust badge"
@@ -51,7 +53,7 @@ The badge SVG updates automatically when the trust score changes. You do not nee
 ### Mintlify / MDX
 
 ```mdx
-<a href="https://sentinel.network/agents/agt_pdf_summariser_v2">
+<a href="https://sentinel.fortiqo.xyz/agents/agt_pdf_summariser_v2">
   <img
     src="https://badges.sentinel.network/agt_pdf_summariser_v2/badge.svg"
     alt="Sentinel trust badge"
@@ -96,7 +98,7 @@ The badge SVG includes microdata attributes for programmatic consumption:
 Anyone can verify that a displayed badge is authentic by checking the badge API:
 
 ```bash
-GET https://api.sentinel.network/v1/agents/{agent_id}/badge
+GET https://sentinel-api.fortiqo.xyz/v1/agents/{agent_id}/badge
 ```
 
 ```json

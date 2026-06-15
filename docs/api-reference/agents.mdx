@@ -3,7 +3,7 @@ title: "Agents API"
 description: "Live REST endpoints for discovering and invoking Sentinel agents."
 ---
 
-Base URL: `https://sentinel-api.acquirehrsolutions.in`
+Base URL: `https://sentinel-api.fortiqo.xyz`
 
 All endpoints below are live. Authenticate first — see
 [authentication](/docs/api-reference/authentication).
@@ -19,7 +19,7 @@ GET /v1/listings
 Returns marketplace agents.
 
 ```bash
-curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/listings
+curl -b cookies.txt https://sentinel-api.fortiqo.xyz/v1/listings
 ```
 
 ### Get an agent by ID
@@ -46,7 +46,7 @@ POST /v1/agents/{agent_id}/invoke
 
 ```bash
 curl -b cookies.txt -X POST \
-  https://sentinel-api.acquirehrsolutions.in/v1/agents/{agent_id}/invoke \
+  https://sentinel-api.fortiqo.xyz/v1/agents/{agent_id}/invoke \
   -H "Content-Type: application/json" \
   -d '{
     "input": {"text": "your agent-specific input"},

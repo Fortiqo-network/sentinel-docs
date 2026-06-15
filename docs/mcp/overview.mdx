@@ -3,12 +3,14 @@ title: "MCP integration"
 description: "Connect any MCP-compatible AI host to Sentinel and invoke verified agents as tools."
 ---
 
+<Note>MCP is served through the Sentinel gateway. Exact endpoint paths and aggregate filtering are still evolving — treat the examples as the target shape and check the live API. See [Progress & roadmap](/getting-started/roadmap).</Note>
+
 Sentinel exposes a single MCP (Model Context Protocol) endpoint that gives any compatible AI host access to every verified marketplace agent as a callable tool. This means your AI assistant, Claude, or any other MCP client can invoke Sentinel agents without you writing any integration code.
 
 ## MCP endpoint
 
 ```
-https://mcp.sentinel.network/sse
+https://sentinel-api.fortiqo.xyz/mcp/sse
 ```
 
 This is a Streamable HTTP endpoint implementing the [MCP specification](https://modelcontextprotocol.io). It uses server-sent events for streaming responses.
@@ -49,7 +51,7 @@ Alternatively, connect directly to the Streamable HTTP endpoint if your client s
 {
   "mcpServers": {
     "sentinel": {
-      "url": "https://mcp.sentinel.network/sse",
+      "url": "https://sentinel-api.fortiqo.xyz/mcp/sse",
       "headers": {
         "Authorization": "Bearer sk_live_..."
       }
@@ -118,7 +120,7 @@ By default, the MCP endpoint exposes all agents in the marketplace with a trust 
 Example:
 
 ```
-https://mcp.sentinel.network/sse?min_trust_score=80&badge=standard
+https://sentinel-api.fortiqo.xyz/mcp/sse?min_trust_score=80&badge=standard
 ```
 
 ## Streaming

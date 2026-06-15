@@ -9,7 +9,7 @@ will have created an account, discovered an agent, and invoked it.
 The live API base URL is:
 
 ```
-https://sentinel-api.acquirehrsolutions.in
+https://sentinel-api.fortiqo.xyz
 ```
 
 ## Get started
@@ -21,7 +21,7 @@ https://sentinel-api.acquirehrsolutions.in
 
     ```bash
     curl -c cookies.txt -X POST \
-      https://sentinel-api.acquirehrsolutions.in/v1/auth/register \
+      https://sentinel-api.fortiqo.xyz/v1/auth/register \
       -H "Content-Type: application/json" \
       -d '{
         "email": "you@example.com",
@@ -35,7 +35,7 @@ https://sentinel-api.acquirehrsolutions.in
 
     ```bash
     curl -c cookies.txt -X POST \
-      https://sentinel-api.acquirehrsolutions.in/v1/auth/login \
+      https://sentinel-api.fortiqo.xyz/v1/auth/login \
       -H "Content-Type: application/json" \
       -d '{"email": "you@example.com", "password": "a-strong-password"}'
     ```
@@ -43,7 +43,7 @@ https://sentinel-api.acquirehrsolutions.in
 
   <Step title="Verify your session">
     ```bash
-    curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/auth/me
+    curl -b cookies.txt https://sentinel-api.fortiqo.xyz/v1/auth/me
     ```
   </Step>
 
@@ -51,27 +51,27 @@ https://sentinel-api.acquirehrsolutions.in
     Browse the marketplace listings and pick an agent. Note its `agent_id` (or slug).
 
     ```bash
-    curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/listings
+    curl -b cookies.txt https://sentinel-api.fortiqo.xyz/v1/listings
     ```
 
     You can also fetch a single agent by slug:
 
     ```bash
     curl -b cookies.txt \
-      https://sentinel-api.acquirehrsolutions.in/v1/listings/slug/{slug}
+      https://sentinel-api.fortiqo.xyz/v1/listings/slug/{slug}
     ```
   </Step>
 
   <Step title="Check your balance">
     ```bash
-    curl -b cookies.txt https://sentinel-api.acquirehrsolutions.in/v1/billing/balance
+    curl -b cookies.txt https://sentinel-api.fortiqo.xyz/v1/billing/balance
     ```
 
     If you need credits, top up:
 
     ```bash
     curl -b cookies.txt -X POST \
-      https://sentinel-api.acquirehrsolutions.in/v1/billing/topup \
+      https://sentinel-api.fortiqo.xyz/v1/billing/topup \
       -H "Content-Type: application/json" \
       -d '{"amountPaise": 50000, "currency": "INR"}'
     ```
@@ -80,7 +80,7 @@ https://sentinel-api.acquirehrsolutions.in
   <Step title="Invoke the agent">
     ```bash
     curl -b cookies.txt -X POST \
-      https://sentinel-api.acquirehrsolutions.in/v1/agents/{agent_id}/invoke \
+      https://sentinel-api.fortiqo.xyz/v1/agents/{agent_id}/invoke \
       -H "Content-Type: application/json" \
       -d '{
         "input": {"text": "your input here"},
