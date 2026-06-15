@@ -9,26 +9,26 @@
 > - **Always work from a plan and keep in mind what we are building** (this repo's `docs/` and the platform docs).
 
 
-This is a Mintlify documentation site. Pages are MDX files with YAML frontmatter. Navigation and settings are in `docs.json`.
+This is a **markdown-only content repository**. There is no build or runtime here — pages are
+plain markdown (`.md`/`.mdx`) with YAML frontmatter, and navigation lives in `nav.json`. The
+content is rendered at **https://sentinel.fortiqo.xyz/docs** by the **sentinel-frontend** docs
+framework (Mintlify-like: sidebar, TOC, search, callouts, code highlighting). **Mintlify has been
+removed** — do not reintroduce `docs.json` or any docs build tool.
 
 ## Local preview
 
-```bash
-npm install -g mintlify
-mintlify dev
-# opens http://localhost:3000
-```
-
-If the dev server fails to start:
+Preview through the frontend, which reads this repo at build time:
 
 ```bash
-mintlify update   # update the CLI, then retry
+cd ../sentinel-frontend
+# SENTINEL_DOCS_PATH defaults to ../sentinel-docs
+npm run dev      # docs render at http://localhost:3000/docs
 ```
 
 ## Adding a page
 
-1. Create an `.mdx` file in the appropriate `docs/` subdirectory.
-2. Add the relative path (without the `.mdx` extension) to the correct group in `docs.json`:
+1. Create a `.md` (or `.mdx` if you need callout components) file in the appropriate `docs/` subdirectory.
+2. Add the path (without extension) to the correct group in `nav.json`:
 
 ```json
 {
@@ -37,12 +37,12 @@ mintlify update   # update the CLI, then retry
     "docs/trust/verification-process",
     "docs/trust/trust-scores",
     "docs/trust/badges",
-    "docs/trust/your-new-page"   // add here
+    "docs/trust/your-new-page"
   ]
 }
 ```
 
-3. Restart `mintlify dev` if the page does not appear.
+3. The frontend picks it up on its next build/dev run — no restart of a docs server needed.
 
 ## MDX frontmatter
 
@@ -144,24 +144,29 @@ icon: "shield-check"        # Fontawesome icon for the sidebar
 </CodeGroup>
 ```
 
-## docs.json structure
+## nav.json structure
 
-Navigation is defined under `navigation.pages` as an array of groups. Each group has a `group` label and a `pages` array of paths.
+Navigation is defined under `groups` as an array of groups. Each group has a `group` label and a
+`pages` array of paths (relative to the repo root, without the file extension). `index` maps to the
+`/docs` root; every other path maps to `/docs/<path-without-leading-"docs/">`.
 
 ```json
 {
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": ["index", "quickstart", "docs/getting-started/installation"]
-      }
-    ]
-  }
+  "name": "Sentinel",
+  "basePath": "/docs",
+  "groups": [
+    {
+      "group": "Getting Started",
+      "pages": ["index", "quickstart", "docs/getting-started/installation"]
+    }
+  ],
+  "openapi": "https://sentinel-api.fortiqo.xyz/openapi.json"
 }
 ```
 
-Path strings are relative to the repo root, without the `.mdx` extension.
+The Mintlify callout components (`<Note>`, `<Warning>`, `<Tip>`, `<Card>`, `<CardGroup>`, `<Steps>`,
+`<Step>`) are still supported — the frontend renderer maps them to brand-styled React components. Use
+`.mdx` for pages that need them; plain `.md` otherwise.
 
 ## Content boundaries
 
@@ -284,3 +289,20 @@ of the DB schema 500s every query that hits the changed table (this has bitten u
 - No-database repos (frontend, docs, infra, contracts, sdk, shared,
   agent-templates): still applies to any cross-repo schema/contract change — land
   the owning service's migration first.
+
+---
+
+## 📚 Docs framework — markdown-only, rendered by the frontend (2026-06-15)
+
+Platform documentation is **markdown-only** and lives in **sentinel-docs** (the content
+source of truth). It is rendered at **https://sentinel.fortiqo.xyz/docs** by the
+**sentinel-frontend** docs framework (Mintlify-like: sidebar, TOC, search, callouts, code).
+
+- **Mintlify is removed.** Do NOT reintroduce `docs.json`/Mintlify or any separate docs
+  build/runtime. sentinel-docs ships markdown (`.md`/`.mdx`) + a `nav.json` manifest only.
+- **Single source of truth:** never duplicate doc content into the frontend. The frontend
+  reads markdown from sentinel-docs at build time via `SENTINEL_DOCS_PATH` (default the
+  monorepo sibling `../sentinel-docs`); nav comes from `nav.json`.
+- **Adding/editing a doc page:** put the markdown in sentinel-docs and add its slug to
+  `nav.json`; the frontend renders it automatically. Track work in
+  `master-doc/docs-todo.md` (tick/append only — never delete a line).

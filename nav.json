@@ -1,0 +1,74 @@
+{
+  "name": "Sentinel",
+  "basePath": "/docs",
+  "theme": { "primary": "#16A34A" },
+  "groups": [
+    {
+      "group": "Getting Started",
+      "pages": [
+        "index",
+        "quickstart",
+        "docs/getting-started/installation",
+        "docs/getting-started/concepts"
+      ]
+    },
+    {
+      "group": "Marketplace",
+      "pages": [
+        "docs/marketplace/discover",
+        "docs/marketplace/trust-reports",
+        "docs/marketplace/playground"
+      ]
+    },
+    {
+      "group": "For Developers",
+      "pages": [
+        "docs/developers/register",
+        "docs/developers/publish",
+        "docs/developers/manifest",
+        "docs/developers/pricing",
+        "docs/sdk/cli"
+      ]
+    },
+    {
+      "group": "API Reference",
+      "pages": [
+        "docs/api-reference/authentication",
+        "docs/api-reference/agents",
+        "docs/api-reference/billing"
+      ]
+    },
+    {
+      "group": "Trust & Verification",
+      "pages": [
+        "docs/trust/verification-process",
+        "docs/trust/trust-scores",
+        "docs/trust/badges"
+      ]
+    },
+    {
+      "group": "SDKs",
+      "pages": ["docs/sdk/python", "docs/sdk/typescript"]
+    },
+    {
+      "group": "MCP Integration",
+      "pages": ["docs/mcp/overview", "docs/mcp/a2a"]
+    },
+    {
+      "group": "Compliance",
+      "pages": ["docs/compliance/dpdp", "docs/compliance/security"]
+    }
+  ],
+  "openapi": "https://sentinel-api.fortiqo.xyz/openapi.json",
+  "anchors": [
+    { "label": "GitHub", "href": "https://github.com/sentinel-network", "icon": "github" },
+    { "label": "Status", "href": "https://sentinel.fortiqo.xyz/status", "icon": "signal" }
+  ],
+  "footer": {
+    "socials": {
+      "x": "https://x.com/sentinel_network",
+      "github": "https://github.com/sentinel-network",
+      "linkedin": "https://linkedin.com/company/sentinel-network"
+    }
+  }
+}
