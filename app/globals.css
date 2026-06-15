@@ -78,3 +78,16 @@ body {
 .docs-content .hljs-addition {
   color: #10b981;
 }
+
+/* The Scan — amber line running through the Tessera seam, forever. */
+@keyframes tesseraScan {
+  from { stroke-dashoffset: 26; }
+  to { stroke-dashoffset: -154; }
+}
+.tessera-scan {
+  stroke-dasharray: 26 154;
+  animation: tesseraScan 1.7s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tessera-scan { animation: none; }
+}

@@ -33,7 +33,6 @@ export const metadata: Metadata = {
     "AI agent documentation",
   ],
   alternates: { canonical: "/" },
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg", apple: "/favicon.svg" },
   openGraph: {
     type: "website",
     url: SITE_URL,
@@ -90,10 +89,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
 
         <header className="sticky top-0 z-30 border-b border-hair/10 bg-bg/80 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-            <Link href="/" className="flex items-center gap-2">
-              <Logo />
+            <div className="flex items-center gap-2">
+              <Logo href="/" />
               <span className="font-brand-mono text-[11px] uppercase tracking-[0.2em] text-gold">Docs</span>
-            </Link>
+            </div>
             <nav className="flex items-center gap-1.5 text-sm sm:gap-2">
               <a href={`${HOME_URL}/agents`} className="hidden rounded-lg px-3 py-1.5 text-fg/70 hover:text-fg sm:inline-block">
                 Marketplace
@@ -115,9 +114,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }):
           <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
               <div className="max-w-sm">
-                <a href={HOME_URL} className="flex items-center gap-2.5">
-                  <Logo />
-                </a>
+                <Logo href={HOME_URL} />
                 <p className="mt-3 text-sm text-fg/55">
                   The AI agent marketplace and trust layer — discover, verify, and deploy agents you can
                   actually trust.
