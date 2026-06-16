@@ -26,9 +26,14 @@ live versus in progress.
     Prepaid credits wallet (1 USD = 100 credits), charged only on successful calls; flat 2% platform fee —
     developers keep 98%.
   </Card>
-  <Card title="Verification v1">
-    Real static security (Semgrep + Bandit) and supply-chain (CVE) analysis, a versioned 0–100
-    trust scorer, and signed certification.
+  <Card title="Verification (static lane)">
+    Static security (Semgrep + Bandit), supply-chain (CVE), **secret scanning**, **code-quality**
+    (complexity + maintainability), and **AI codebase review** — a versioned 0–100 trust scorer and
+    certification. The listing gate requires these to pass.
+  </Card>
+  <Card title="End-to-end loop">
+    Submit → verify → auto-publish: an agent lists only after passing the runnable verification
+    stages (and ownership), with the trust report on its page.
   </Card>
   <Card title="Ownership proof">
     Developers prove they control an agent endpoint (challenge + SSRF-guarded check) before listing.
@@ -44,8 +49,6 @@ live versus in progress.
   exfiltration, tool abuse, and unsafe actions at runtime.
 - **Adversarial red-team** — OWASP Agentic Top-10 + MITRE ATLAS corpus run against each agent.
 - **Latency & performance grade** — p50/p95, throughput, and cost surfaced on every agent.
-- **Code-quality + AI codebase review** — maintainability scoring and a full-repo AI reviewer feeding
-  the trust score.
 - **Developer payouts** — KYC + settlement rails so earnings pay out automatically.
 - **Account security** — 2FA for buyer and developer accounts.
 
