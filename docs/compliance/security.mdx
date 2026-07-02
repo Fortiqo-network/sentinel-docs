@@ -1,149 +1,105 @@
 ---
 title: "Security model"
-description: "Sentinel's isolation model, data handling practices, sandboxing, and responsible disclosure policy."
+description: "Sentinel's isolation model, data handling practices, and responsible disclosure policy."
 ---
 
-This page describes how Sentinel protects buyer and developer data, how agents are isolated during verification and invocation, and how to report security vulnerabilities.
+This page describes how Sentinel protects buyer and developer data, how agents are isolated during verification, and how to report security vulnerabilities. It reflects the **current** implementation; forward-looking items are labelled as planned.
 
 ## Isolation model
 
 ### Verification sandbox
 
-Every agent is verified in an isolated container that has:
+Agent verification runs in an isolated container designed to limit what agent-supplied code and artifacts can do:
 
 - No access to Sentinel's production databases or internal services
-- Outbound network blocked except to domains the agent explicitly declared in its manifest
-- CPU and memory hard limits that cannot be exceeded
+- Constrained outbound network
+- CPU and memory limits
 - An ephemeral filesystem — nothing persists between verification runs
-- A separate network namespace per verification job
 
-The sandbox enforces these limits at the kernel level using Linux namespaces and seccomp filters. Agent code cannot escape the container.
+The sandbox uses Linux container isolation. It is a strong boundary, not a guarantee of perfect containment; we treat sandbox escape as an ongoing hardening area (see the security backlog).
+
+> **Runtime dynamic execution is not enabled.** Sentinel does not currently execute agent code in a managed runtime. The Tier-A managed runtime is a stub and will not be enabled until stronger isolation (seccomp/egress controls) is in place.
 
 ### Invocation path
 
-At runtime, Sentinel acts as a secure proxy between the buyer and the developer's agent endpoint:
+At runtime, Sentinel acts as a proxy between the buyer and the developer's agent endpoint:
 
 ```
 Buyer → Sentinel API → Agent endpoint (developer-hosted)
 ```
 
-Sentinel does not execute agent code at runtime — it forwards validated inputs to the developer's endpoint over mTLS and returns the response. The developer's endpoint is responsible for its own isolation.
+Sentinel does not execute agent code at runtime — it forwards validated inputs to the developer's endpoint over TLS and returns the response. The developer's endpoint is responsible for its own isolation. Outbound calls to developer endpoints are checked against an SSRF guard (DNS-resolved private/loopback/metadata ranges are blocked) and redirects are not followed.
 
 ### Input validation
 
 Before forwarding a buyer's inputs to an agent, Sentinel:
 
-1. Validates the payload against the agent's `input_schema`
-2. Enforces the declared `max_payload_bytes` limit
-3. Strips headers that could be used for header injection
-4. Adds a `X-Sentinel-Request-Id` header for request tracing
+1. Validates the payload against the agent's `input_schema` (when declared)
+2. Enforces request size limits
+3. Strips hop-by-hop headers and adds a request-tracing id
 
-Payloads that fail schema validation are rejected with a `400 Bad Request` before they reach the developer's endpoint.
+Payloads that fail schema validation are rejected before they reach the developer's endpoint.
 
 ## Data handling
 
 ### Invocation payloads
 
-Sentinel forwards invocation payloads to agent endpoints. Sentinel does not store payload content unless the agent's manifest declares a `data_retention_days` value greater than 0 and you have given explicit consent in your account settings.
-
-By default, Sentinel stores:
-
-- Invocation metadata (invocation ID, agent ID, timestamp, credit cost, status)
-- HTTP response status and latency
-- Error messages on failure
-
-Sentinel does not store input or output content by default.
+Sentinel forwards invocation payloads to agent endpoints. By default Sentinel stores invocation **metadata** (invocation id, agent id, timestamp, credit cost, status, latency, error messages) and does **not** store input or output content.
 
 ### TLS
 
-All traffic between buyers, Sentinel, and developer endpoints is encrypted with TLS 1.3 or higher. Sentinel enforces TLS 1.3 on its own endpoints and rejects connections to agent endpoints running older protocol versions.
-
-### mTLS for agent endpoints
-
-Developer endpoints that register with a client certificate receive mutual TLS authentication. Sentinel presents a client certificate signed by the Sentinel CA with every forwarded request. Developers can verify that requests come from Sentinel and not from arbitrary clients.
-
-Instructions for configuring mTLS on your endpoint are available in the developer dashboard under **Settings → Endpoint security**.
+Traffic to Sentinel's public edge is served over TLS (via Cloudflare). Calls to developer endpoints are made over TLS.
 
 ### Secrets management
 
-Sentinel uses a hardware security module (HSM) for storing:
+Sensitive material — API-key hashes, the JWT signing secret, service-to-service tokens, and payment-provider keys — is provided to services as environment-injected secrets managed through the deployment platform (GitHub Actions secrets → per-service environment). Secrets are never committed to source control.
 
-- API key material
-- JWT signing keys
-- mTLS CA private keys
-- Payout encryption keys
-
-Keys never leave the HSM in plaintext. Key rotation is automated and happens without service interruption.
+> A dedicated key-management service / HSM is **not** currently in use. Migrating signing and payout keys to managed KMS/HSM is on the infrastructure roadmap.
 
 ## Authentication security
 
-- API keys are one-way hashed before storage — Sentinel cannot recover your key if you lose it
-- JWTs use EdDSA (Ed25519) signatures — resistant to length-extension attacks
-- Failed authentication attempts are rate-limited and logged
-- Suspicious authentication patterns trigger automated account review
+- API keys are one-way hashed (SHA-256) before storage — Sentinel cannot recover your key if you lose it.
+- Session tokens are signed JWTs (HMAC-SHA256); server-controlled claims cannot be overridden by clients.
+- Ed25519 signatures are used for **metering events** and **verification reports** (not for session auth).
+- Repeated failed logins are rate-limited per account.
 
 ## Bug bounty and responsible disclosure
 
 Sentinel operates a responsible disclosure programme. If you discover a security vulnerability:
 
-1. Email [security@sentinel.network](mailto:security@sentinel.network) with a detailed description
+1. Email [security@fortiqo.xyz](mailto:security@fortiqo.xyz) with a detailed description
 2. Include reproduction steps, impact assessment, and any proof-of-concept
-3. Do not disclose the vulnerability publicly until Sentinel has had 90 days to respond and remediate
+3. Do not disclose publicly until Sentinel has had a reasonable time to remediate
 
-Sentinel commits to:
-
-- Acknowledging receipt within 48 hours
-- Providing a substantive response within 7 days
-- Keeping you informed of remediation progress
-- Not pursuing legal action against researchers who act in good faith
+Sentinel aims to acknowledge receipt promptly, keep you informed of remediation progress, and not pursue legal action against researchers acting in good faith. Any monetary reward is offered at Sentinel's discretion based on severity and impact.
 
 ### Scope
 
 In scope:
 
-- All endpoints under `sentinel-api.fortiqo.xyz`
-- The MCP endpoint at `sentinel-api.fortiqo.xyz/mcp`
+- Endpoints under `sentinel-api.fortiqo.xyz` (including `/mcp`)
 - The Sentinel dashboard at `sentinel.fortiqo.xyz`
 - The verification pipeline (logic bugs, sandbox escapes)
 - The Python and TypeScript SDKs
 
 Out of scope:
 
-- Social engineering attacks
-- Physical attacks
-- Denial-of-service attacks
+- Social engineering, physical attacks, and denial-of-service
 - Vulnerabilities in third-party services (report directly to the vendor)
 
-### Rewards
+## Compliance status
 
-| Severity | Reward |
-|---|---|
-| Critical | $5 000–$20 000 |
-| High | $1 000–$5 000 |
-| Medium | $250–$1 000 |
-| Low | $50–$250 |
-
-Rewards are paid in USD via bank transfer or USDC.
-
-## Compliance certifications
+> Sentinel is an early-stage platform. The statuses below are **honest, current** positions — **none of these are independent certifications.** Do not rely on them as a substitute for your own due diligence.
 
 | Standard | Status |
 |---|---|
-| SOC 2 Type II | In progress (target: Q4 2025) |
-| ISO 27001 | Planned for 2026 |
-| GDPR | Compliant — see DPA at [sentinel.network/legal/dpa](https://sentinel.fortiqo.xyz/legal/dpa) |
-| DPDP Act 2023 | Compliant — see [DPDP page](/docs/compliance/dpdp) |
+| SOC 2 | Not started — planned |
+| ISO 27001 | Not started — planned |
+| GDPR | Not independently certified. We aim to align our data-handling practices with GDPR principles; a Data Processing Addendum is in preparation. |
+| DPDP Act 2023 | Not independently certified. We aim to align with DPDP obligations — see the [DPDP page](/docs/compliance/dpdp). |
 
-## Penetration testing
-
-Sentinel undergoes annual third-party penetration testing. Summaries of findings and remediation status are available to enterprise customers under NDA. Contact [enterprise@sentinel.network](mailto:enterprise@sentinel.network).
+Independent penetration testing has **not** yet been conducted; it is planned. We will publish an accurate status here as these mature.
 
 ## Incident response
 
-If Sentinel detects or is notified of a security incident affecting your account:
-
-1. You will be notified by email within 72 hours (GDPR/DPDP requirement)
-2. Sentinel will provide a written incident report within 14 days
-3. Affected API keys will be rotated automatically; you will receive new keys by secure channel
-
-To report a suspected incident with your own account, contact [security@sentinel.network](mailto:security@sentinel.network).
+If Sentinel detects or is notified of a security incident affecting your account, we will notify affected users and provide a written summary, consistent with our obligations under applicable law. To report a suspected incident with your own account, contact [security@fortiqo.xyz](mailto:security@fortiqo.xyz).
