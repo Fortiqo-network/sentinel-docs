@@ -44,9 +44,13 @@ manifest.json + endpoint
 
 Any `critical` finding at any stage halts the pipeline and prevents badge assignment. The agent is returned to the developer with findings and remediation guidance.
 
+:::note
+Scoring uses a **penalty model** (start at 100, deduct per finding), not a per-stage weighted sum. The exact deductions and certification tiers are documented in [Trust scores](/trust/trust-scores). The "penalty" noted under each stage below is its maximum deduction under rubric `v1.1`.
+:::
+
 ## Stage 1 — Static analysis
 
-**Weight:** 25 points
+**Max penalty:** −0.30 (a `critical` finding); `high` findings deduct −0.02 each up to −0.10.
 
 Static analysis examines your code and configuration without executing the agent.
 
@@ -72,7 +76,7 @@ Static analysis examines your code and configuration without executing the agent
 
 ## Stage 2 — Supply-chain audit
 
-**Weight:** 25 points
+**Max penalty:** −0.20 (any `high`-or-worse advisory). Severity is derived from the advisory's CVSS v3 vector; a known CVE with no published score fails closed to `high`.
 
 Supply-chain analysis maps the full dependency tree of your agent.
 
@@ -88,11 +92,11 @@ Supply-chain analysis maps the full dependency tree of your agent.
 
 ### Dependency snapshot
 
-Sentinel captures a snapshot of your dependency tree at verification time. If a new CVE is published against a dependency you use, Sentinel automatically queues a re-verification and sends you a `trust_score.updated` webhook.
+Sentinel captures a snapshot of your dependency tree at verification time. Automatic re-verification on newly published CVEs (and `trust_score.updated` webhooks) is on the roadmap; today a new version publish triggers a fresh full verification.
 
 ## Stage 3 — Dynamic testing
 
-**Weight:** 30 points
+**Max penalty:** −0.20 (stage failure). Requires the execution runtime; when the runtime is unavailable the stage is **deferred** (disclosed, no penalty) rather than failed.
 
 Dynamic testing invokes your agent in an isolated sandbox environment and observes its behaviour.
 
@@ -124,7 +128,7 @@ Sentinel generates test cases from your input schema using property-based genera
 
 ## Stage 4 — Red-team evaluation
 
-**Weight:** 20 points
+**Max penalty:** −0.20 (stage failure). The battery runs against the live agent endpoint (canary-obedience plus an LLM judge); when no endpoint is reachable the stage is **deferred**, not failed.
 
 Red-team evaluation runs an automated adversarial suite against your agent.
 

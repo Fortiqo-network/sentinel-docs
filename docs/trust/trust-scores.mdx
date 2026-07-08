@@ -1,137 +1,92 @@
 ---
 title: "Trust scores"
-description: "How Sentinel calculates trust scores — the rubric, weights, score ranges, and what they mean for buyers and developers."
+description: "How Sentinel calculates trust scores — the penalty-model rubric, exact weights, certification tiers, and what they mean for buyers and sellers."
 ---
 
-A trust score is a number from 0 to 100 that summarises the security, reliability, and transparency posture of a Sentinel agent. Every score is computed by the same versioned rubric, so scores are comparable across agents.
+A trust score is a number from 0 to 100 that summarises the security, reliability, and transparency posture of a Sentinel agent. Every score is produced by the same versioned, deterministic rubric, so scores are comparable across agents. The current rubric is **`v1.1`**.
 
-## Score composition
+## How the score is computed
 
-The score is a weighted sum of four stage scores:
+Sentinel uses a **penalty model**, not a weighted sum. Every agent starts at a perfect **1.0** and each verification signal can only *deduct* from that score:
 
-| Stage | Max points | Weight |
+```
+score = 1.0
+score -= (penalties from each stage)
+score = clamp(score, 0.0, 1.0)         # never below 0 or above 1
+display_score = round(score * 100)     # the 0–100 number you see
+```
+
+This makes the score transparent and monotonic: a clean agent scores 100, and every deduction maps to a concrete, disclosed finding. The internal score is a float in `[0.0, 1.0]`; the displayed score is `round(score × 100)`.
+
+## Penalty weights (rubric v1.1)
+
+| Signal | Condition | Deduction |
 |---|---|---|
-| Static analysis | 25 | 25% |
-| Supply-chain audit | 25 | 25% |
-| Dynamic testing | 30 | 30% |
-| Red-team evaluation | 20 | 20% |
-| **Total** | **100** | **100%** |
+| Static analysis (SAST) | any `critical` finding | −0.30 |
+| Static analysis (SAST) | `high` findings (no critical) | −0.02 each, capped at −0.10 |
+| Supply-chain (CVEs) | any `high`-or-worse advisory | −0.20 |
+| Committed secret | any `critical` secret | −0.30 |
+| Committed secret | any `high` secret (no critical) | −0.15 |
+| Code quality | `high` complexity/maintainability | −0.03 each, capped at −0.10 |
+| AI code review | any `critical` finding | −0.15 |
+| AI code review | `high` findings (no critical) | −0.03 each, capped at −0.10 |
+| Dynamic analysis | stage failed | −0.20 |
+| Red-team evaluation | stage failed | −0.20 |
+| Conformance | `high` finding | −0.10 |
+| Conformance | `medium` findings (no high) | −0.02 each, capped at −0.10 |
 
-Each stage score is computed independently. A `critical` finding in any stage sets that stage's score to 0 and prevents badge assignment regardless of the total.
+Penalties are **per-stage**: a finding only ever triggers the penalty for the stage that produced it (a supply-chain CVE never triggers the static-analysis penalty). The overall finding counts shown in a report are the union of all stages, counted once.
 
-## Score ranges
+## Deferred stages are never penalised
 
-| Score | Interpretation |
+Some stages depend on infrastructure that may be unavailable — for example, dynamic detonation and live red-team require the execution runtime, and AI review requires a model key. When a stage cannot run, it is marked **deferred**, not failed: it deducts **nothing**, and the report discloses it in `public_summary.stages_deferred` so a badge never claims coverage it did not actually achieve. Only a genuine failure of a stage that *did* run deducts points.
+
+## Certification tiers
+
+The final score maps to a certification tier:
+
+| Tier | Score (0–1) | Displayed |
+|---|---|---|
+| `certified_managed` | ≥ 0.90 | ≥ 90 |
+| `certified` | ≥ 0.75 | ≥ 75 |
+| `provisional` | ≥ 0.50 | ≥ 50 |
+| `uncertified` | < 0.50 | < 50 |
+
+An `uncertified` agent is not eligible for the marketplace listing gate.
+
+## What the score means for buyers
+
+- **90–100 (`certified_managed`):** No critical/high findings and every stage that ran passed. Safe for production; review any low/info findings.
+- **75–89 (`certified`):** No critical findings; at most a few capped deductions. Suitable for production after a quick read of the open findings.
+- **50–74 (`provisional`):** One high finding or several capped medium deductions. Read the full report before deploying in a security-sensitive context.
+- **Below 50 (`uncertified`):** Not recommended for production — significant unresolved findings, or a critical finding.
+
+Because deferred stages are disclosed, always check `stages_deferred` on the report: a high score with `dynamic`/`redteam` deferred means those lanes have not yet run (they run once the execution runtime is available).
+
+## How to read a report
+
+The score is served with two views:
+
+- **Public summary** (`GET /reports/{agent_id}/badge` via the gateway): score, cert tier, critical/high counts, and `stages_deferred`.
+- **Full report** (`GET /reports/{agent_id}`): per-stage results and finding counts.
+
+Every report is stamped with its `rubric_version` and, when signing is enabled, an Ed25519 signature so consumers can verify the score was produced by Sentinel and not tampered with.
+
+## How sellers improve a score
+
+| Action | Effect |
 |---|---|
-| 90–100 | Excellent — strong security and reliability posture, eligible for Premium badge |
-| 75–89 | Good — minor issues present, eligible for Standard badge |
-| 50–74 | Acceptable — multiple medium findings, eligible for Basic badge |
-| 1–49 | Poor — significant issues, no badge, not recommended for production use |
-| 0 | Failed — one or more critical findings |
-
-## What each point range means for buyers
-
-**90–100:** The agent has no open critical or high findings. It passed the full dynamic and red-team suite. You can use it in production without additional scrutiny. Review the report to understand any low/info findings.
-
-**75–89:** The agent has no critical findings and at most one or two medium findings. Review what the medium findings are — most are remediable and will improve in the next re-verification. Suitable for production.
-
-**50–74:** The agent has multiple open medium findings or one open high finding. Review the full report before deploying in a security-sensitive context. Consider asking the developer for a remediation timeline.
-
-**Below 50:** Do not use in production. The agent has significant unresolved security or reliability issues.
-
-**0:** The agent failed verification. It has at least one critical finding. It is not listed on the marketplace and cannot be invoked.
-
-## Finding severity and score impact
-
-Findings deduct points from the stage score. The deduction depends on the finding's severity and the stage it belongs to.
-
-| Severity | Typical deduction |
-|---|---|
-| `critical` | Stage score → 0; pipeline halted |
-| `high` | 5–10 points from stage score |
-| `medium` | 2–4 points from stage score |
-| `low` | 0.5–1 point from stage score |
-| `info` | 0 points |
-
-Exact deductions vary by finding category — the rubric document specifies the exact weight for each category. The rubric is versioned and publicly available at `/v1/trust/rubric/{version}`.
-
-## Score changes over time
-
-Trust scores are not static. They change when:
-
-- A new agent version is published (full re-verification)
-- A dependency receives a new CVE advisory (partial re-verification of the supply-chain stage)
-- The scheduled re-verification runs (every 90 days)
-- A finding is resolved or disputed (score recalculated immediately)
-
-When a score changes, Sentinel:
-
-1. Updates the score and badge on the marketplace listing in real time
-2. Sends a `trust_score.updated` webhook to subscribed endpoints
-3. Logs the change in the trust score history visible on the agent detail page
-
-## Historical scores
-
-Every score change is recorded with a timestamp and the rubric version used to compute it. You can view the score history on the agent detail page or via the API:
-
-```bash
-GET /v1/agents/{agent_id}/trust-score/history
-```
-
-```json
-{
-  "history": [
-    {
-      "score": 87,
-      "badge": "standard",
-      "rubric_version": "2025.1",
-      "computed_at": "2025-05-14T09:32:00Z",
-      "trigger": "publish"
-    },
-    {
-      "score": 82,
-      "badge": "standard",
-      "rubric_version": "2025.1",
-      "computed_at": "2025-04-01T09:32:00Z",
-      "trigger": "cve_advisory"
-    }
-  ]
-}
-```
+| Remove committed secrets (keys, private-key blocks) | Removes the −0.15/−0.30 secret penalty |
+| Fix critical/high SAST findings (`eval`, injection, etc.) | Removes up to −0.30 static penalty |
+| Upgrade vulnerable dependencies | Removes the −0.20 supply-chain penalty |
+| Reduce cyclomatic complexity of hot functions | Removes up to −0.10 code-quality penalty |
+| Address a red-team jailbreak / prompt-injection catch | Removes the −0.20 red-team penalty |
+| Expose a working `/health` + `/invoke` contract | Avoids the conformance penalty |
 
 ## Rubric versioning
 
-The scoring rubric is versioned with the format `YYYY.N` (for example, `2025.1`). The rubric version is recorded in every trust report.
+The rubric version is recorded on every trust report (currently `v1.1`). A change to any weight or threshold ships as a new rubric version and is **shadow-run** against existing agents before it takes effect, so scores never move without a corresponding, published rubric change.
 
-When the rubric changes:
-
-- All agents are re-verified against the new rubric within 30 days of the new version's release
-- A changelog is published explaining what changed and why
-- Weight changes require an RFC and a 30-day public comment period before they take effect
-
-You can retrieve any rubric version via the API:
-
-```bash
-GET /v1/trust/rubric/2025.1
-```
-
-## Score for buyers: what to look for
-
-When evaluating an agent for production use:
-
-1. **Check the score** — is it above 75?
-2. **Read the open findings** — are any of them `high` severity? What do they affect?
-3. **Check the verified date** — is the score recent (within 90 days)?
-4. **Look at the data handling declarations** — does the agent retain data? Where is it processed?
-5. **Check the developer's bond tier** — does it match the risk profile of your use case?
-
-## Score for developers: how to improve
-
-| Action | Score impact |
-|---|---|
-| Pin all dependencies to exact versions | +2–5 points (supply-chain) |
-| Remove all secrets from source code | +5–10 points (static) |
-| Add input validation and sanitisation | +3–8 points (static + dynamic) |
-| Fix red-team prompt injection finding | +5–10 points (red-team) |
-| Add example inputs to the manifest | Improves dynamic test coverage |
-| Upgrade vulnerable dependencies | Removes CVE deductions |
+:::note Roadmap
+Continuous re-verification (score decay + periodic re-check), a public score-history API, `trust_score.updated` webhooks, and an externally-fetchable rubric endpoint are planned and not yet generally available. This page documents the rubric as it is **implemented today**; see the roadmap for what is coming.
+:::
