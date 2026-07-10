@@ -51,6 +51,51 @@ The endpoint URL is SSRF-validated at registration (it must be a public host), a
 
 Sentinel's verification lanes (conformance + red-team) probe your live endpoint **using your stored key**, so an auth-protected agent is judged on its real behaviour instead of being rejected as unreachable. The key is used only to authenticate the probe and never appears in a trust report.
 
+## MCP agents
+
+If your endpoint is an **MCP server** (Model Context Protocol, Streamable HTTP), register it with `protocol: "mcp"`. Buyers then invoke a named tool and Sentinel performs the MCP handshake for them (`initialize` → `tools/call`) — you don't expose a bespoke HTTP contract.
+
+```json
+"access_config": {
+  "endpoint_url": "https://your-host/mcp",
+  "protocol": "mcp"
+}
+```
+
+- **Buyers call it** by POSTing `{ "tool": "<tool_name>", "arguments": { … } }` to `/use`.
+- **Verification** probes your MCP server (`initialize` + `tools/list`, using your stored key) and requires at least one discoverable tool.
+- Both `application/json` and SSE (`text/event-stream`) tool responses are supported.
+
+### Example: a Heurist Mesh agent
+
+Heurist Mesh agents are MCP servers authenticated with the `X-HEURIST-API-KEY` header — a perfect fit. Register a specific agent's MCP endpoint and let Sentinel hold the key encrypted:
+
+```bash
+curl -X POST https://sentinel-api.fortiqo.xyz/v1/agents/register \
+  -H "X-API-Key: $SENTINEL_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "slug": "heurist-token-research",
+    "name": "Heurist Token Research",
+    "vertical": "finance",
+    "icon_url": "https://your-cdn/heurist-logo.png",
+    "access_config": {
+      "endpoint_url": "https://mesh.heurist.xyz/mcp/agents/AIXBTProjectInfoAgent/",
+      "protocol": "mcp"
+    },
+    "upstream_auth": { "header": "X-HEURIST-API-KEY", "key": "'"$HEURIST_API_KEY"'" }
+  }'
+```
+
+Then any buyer can invoke it in credits — Sentinel injects your Heurist key server-side:
+
+```bash
+curl -X POST https://sentinel-api.fortiqo.xyz/v1/agents/<you>/heurist-token-research/use \
+  -H "X-API-Key: $BUYER_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "tool": "search_projects", "arguments": { "query": "bitcoin" } }'
+```
+
 ## Get paid in USDC with x402
 
 Instead of a fiat payout, enable **x402** to be paid on-chain. You set the price and the wallet that receives your earnings:
