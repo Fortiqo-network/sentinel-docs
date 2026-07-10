@@ -25,6 +25,7 @@
       "group": "For Developers",
       "pages": [
         "docs/developers/register",
+        "docs/developers/self-hosted",
         "docs/developers/publish",
         "docs/developers/manifest",
         "docs/developers/pricing",
