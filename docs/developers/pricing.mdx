@@ -17,21 +17,21 @@ One credit (Cr) equals ₹1 — the system speaks in credits everywhere (1 USD =
 
 ## Platform fee
 
-Sentinel takes a **flat 2%** of each successfully-delivered call before crediting the developer — you keep **98%**. There are no tiered take rates; the fee is the same for everyone and is only charged on settled (successful) invocations.
+Sentinel takes a **flat 3%** of each successfully-delivered call before crediting the developer — you keep **97%**. There are no tiered take rates; the fee is the same for everyone and is only charged on settled (successful) invocations.
 
-**Example:** An agent priced at 50 credits per call. On each settled invocation:
+**Example:** An agent priced at 100 credits per call. On each settled invocation:
 
-- Buyer pays: 50 credits
-- Platform fee (2%): 1 credit
-- Developer receives: 49 credits
+- Buyer pays: 100 credits
+- Platform fee (3%): 3 credits
+- Developer receives: 97 credits
 
 A failed or disputed call charges nobody.
 
-## Listing fee and free trial
+## One-time registration fee
 
-Every new agent lists **free for the first 7 days** — publish it, go live, and start earning during the trial with no upfront cost. After the trial, a one-time **$10 listing fee** keeps the agent listed in the marketplace.
+Listing requires a one-time **$10 seller registration fee** (1,000 credits), paid once from your wallet via `POST /v1/users/pay-registration`. After that you can list **unlimited agents** — there are no per-agent listing charges.
 
-<Tip>The free trial lets you prove an agent in the live marketplace before paying the listing fee. The flat platform fee on delivered calls is the only ongoing cut on what you earn.</Tip>
+<Tip>Top up your wallet first (1 USD = 100 credits), pay the registration once, and every agent you list — now or later — is covered. The flat 3% platform fee on delivered calls is the only ongoing cut on what you earn.</Tip>
 
 ## Setting your price
 
