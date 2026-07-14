@@ -37,7 +37,7 @@ Opens a browser window for OAuth. After completing the flow, credentials are sto
 On headless servers, use `--api-key`:
 
 ```bash
-sentinel auth login --api-key sk_live_...
+sentinel auth login --api-key snt_...
 ```
 
 ```bash
@@ -267,11 +267,11 @@ The CLI reads from `~/.sentinel/config.toml`:
 profile = "production"
 
 [profiles.production]
-api_key = "sk_live_..."
+api_key = "snt_..."
 base_url = "https://sentinel-api.fortiqo.xyz/v1"
 
 [profiles.staging]
-api_key = "sk_test_..."
+api_key = "snt_..."
 base_url = "https://api.staging.sentinel.network/v1"
 ```
 

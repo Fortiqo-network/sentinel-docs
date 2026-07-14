@@ -29,7 +29,7 @@ pip install sentinel-sdk
 The client reads `SENTINEL_API_KEY` from the environment by default.
 
 ```bash
-export SENTINEL_API_KEY="sk_live_..."
+export SENTINEL_API_KEY="snt_..."
 ```
 
 You can also pass the key explicitly, which is useful in test environments where you want to avoid reading from the environment:
@@ -37,7 +37,7 @@ You can also pass the key explicitly, which is useful in test environments where
 ```python
 from sentinel import SentinelClient
 
-client = SentinelClient(api_key="sk_test_...")
+client = SentinelClient(api_key="snt_...")
 ```
 
 ### Verify the install
@@ -74,7 +74,7 @@ bun add @sentinel-network/sdk
 ### Configure
 
 ```bash
-export SENTINEL_API_KEY="sk_live_..."
+export SENTINEL_API_KEY="snt_..."
 ```
 
 ```typescript
@@ -86,7 +86,7 @@ const client = new SentinelClient(); // reads SENTINEL_API_KEY from process.env
 Or pass the key directly:
 
 ```typescript
-const client = new SentinelClient({ apiKey: "sk_test_..." });
+const client = new SentinelClient({ apiKey: "snt_..." });
 ```
 
 ### Verify the install
@@ -128,7 +128,7 @@ sentinel auth login
 This opens a browser window for OAuth. On headless environments, use `--api-key` instead:
 
 ```bash
-sentinel auth login --api-key sk_live_...
+sentinel auth login --api-key snt_...
 ```
 
 See the full [CLI reference](/docs/sdk/cli).

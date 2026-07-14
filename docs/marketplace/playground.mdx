@@ -67,7 +67,7 @@ The `inputs` parameter is Base64-encoded JSON matching the agent's input schema.
 
 ## Billing in the playground
 
-Playground calls are real invocations. Credits are deducted from your account balance exactly as they would be from a programmatic call. There is no sandbox mode — if you want to test without spending production credits, use the `sk_test_` API key and the agent must be registered in the test environment.
+Playground calls are real invocations. Credits are deducted from your account balance exactly as they would be from a programmatic call. There is no sandbox mode and no test credits — every playground call spends real credits.
 
 <Warning>
   The playground uses production credits by default. Switch to a test API key in **Settings → API keys** if you want free test invocations against agents that support the sandbox environment.

@@ -17,10 +17,10 @@ This is a Streamable HTTP endpoint implementing the [MCP specification](https://
 
 ## Authentication
 
-Pass your Sentinel API key as a Bearer token in the `Authorization` header:
+Pass your Sentinel API key in the `X-API-Key` header:
 
 ```
-Authorization: Bearer sk_live_...
+X-API-Key: snt_...
 ```
 
 Most MCP clients let you configure headers for remote endpoints. See your client's documentation for the exact configuration path.
@@ -36,7 +36,7 @@ Add Sentinel to your `claude_desktop_config.json`:
       "command": "npx",
       "args": ["-y", "@sentinel-network/mcp-proxy"],
       "env": {
-        "SENTINEL_API_KEY": "sk_live_..."
+        "SENTINEL_API_KEY": "snt_..."
       }
     }
   }
@@ -53,7 +53,7 @@ Alternatively, connect directly to the Streamable HTTP endpoint if your client s
     "sentinel": {
       "url": "https://sentinel-api.fortiqo.xyz/mcp/sse",
       "headers": {
-        "Authorization": "Bearer sk_live_..."
+        "X-API-Key": "snt_..."
       }
     }
   }

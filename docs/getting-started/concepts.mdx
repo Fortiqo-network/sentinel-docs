@@ -98,7 +98,7 @@ Sentinel exposes a single **MCP endpoint** at `https://sentinel-api.fortiqo.xyz/
 
 ## API key
 
-An **API key** is a long-lived credential prefixed with `sk_live_` (production) or `sk_test_` (sandbox). API keys authenticate REST requests. For user-facing flows, use short-lived [JWTs](#jwt) instead.
+An **API key** is a long-lived credential prefixed with `snt_`. API keys authenticate REST requests via the `X-API-Key` header. For user-facing flows, use short-lived [JWTs](#jwt) instead.
 
 ## JWT
 

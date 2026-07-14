@@ -42,7 +42,7 @@ asyncio.run(main())
 from sentinel import SentinelClient, SentinelConfig
 
 config = SentinelConfig(
-    api_key="sk_live_...",           # defaults to SENTINEL_API_KEY env var
+    api_key="snt_...",               # defaults to SENTINEL_API_KEY env var
     base_url="https://sentinel-api.fortiqo.xyz/v1",  # override for staging
     timeout_ms=30_000,               # request timeout in milliseconds
     max_retries=3,                   # automatic retry on 429 and 5xx
