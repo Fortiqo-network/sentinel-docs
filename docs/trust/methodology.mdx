@@ -1,0 +1,81 @@
+---
+title: "Verification methodology"
+description: "The principles behind Sentinel verification — what a trust score is, what it is not, and the guarantees that make it inspectable and trustworthy."
+icon: "shield-check"
+---
+
+A trust score is only worth as much as the method behind it. This page states the principles Sentinel commits to — the properties every score has, and the limits of what a score claims. The mechanics live on two companion pages: [the verification process](/docs/trust/verification-process) explains the pipeline stages, and [trust scores](/docs/trust/trust-scores) gives the exact rubric weights.
+
+<Note>
+  Sentinel publishes its methodology in full because a verification signal that cannot be inspected cannot be trusted. What is deliberately withheld is narrow: specific red-team prompts and bypass techniques, which would undermine the checks if published.
+</Note>
+
+## What a trust score is
+
+A trust score is a number from 0 to 100 produced by a fixed, published rubric from the evidence gathered during verification. It summarises an agent's **security, reliability, and transparency posture** at the moment it was verified. It is not a rating of usefulness, popularity, or quality of output.
+
+## The guarantees
+
+Every score carries these properties, and each is something you can check rather than take on faith.
+
+### Deterministic and reproducible
+
+The same inputs produce the same score. Scoring is a fixed function of the findings, not a model or a human judgement call, so two agents with identical findings receive identical scores and a re-run on unchanged source reproduces the number.
+
+### Versioned, and changes are shadow-run
+
+Every report is stamped with the `rubric_version` that produced it (currently `v1.1`). A change to any weight or threshold ships as a **new** version and is shadow-run against existing agents before it takes effect, so a score never moves unless either the agent changed or a published rubric change did. You can always tell which rubric scored a given report.
+
+### A penalty model, not a black box
+
+Every agent starts at a perfect score, and each verification signal can only **deduct** from it. There is no opaque weighted sum: every point lost maps to a concrete, disclosed finding with a location and a remediation. A clean agent scores 100, and you can read exactly why any agent scored less.
+
+### Disclosed, including its gaps
+
+Sentinel never silently passes a check it did not run. When a stage cannot run — for example, a behavioural stage that needs the execution runtime — it is marked **deferred** on the report (`stages_deferred`) and applies no penalty, rather than being counted as a pass. A high score with deferred stages means those lanes have not yet run, and the report says so.
+
+### Independent of the seller
+
+Nothing in the score is self-attested. Findings come from Sentinel's own analysis of the submitted source and its own probes of the agent's endpoint — never from the developer's claims about their agent. Agent ownership is proven cryptographically before listing, so a score is bound to an agent the developer actually controls.
+
+### Fail-closed on critical findings
+
+Any `critical` finding at any stage halts the pipeline and blocks certification. The default on a security-relevant unknown is to withhold trust, not grant it.
+
+### Signed and tamper-evident
+
+When signing is enabled, each report carries an Ed25519 signature over its canonical fields, so a consumer can verify the score was produced by Sentinel and has not been altered in transit.
+
+## What a trust score is not
+
+Being honest about the limits is part of the methodology.
+
+- **Not a safety guarantee.** A high score means the agent cleared Sentinel's checks, not that it is free of every possible flaw. Verification narrows risk; it does not eliminate it.
+- **Point-in-time.** A score reflects the agent as verified. Continuous re-verification and score decay are on the roadmap (below); until then, check the report date.
+- **Not an audit of the model.** Sentinel verifies the agent's code, dependencies, endpoint behaviour, and resistance to adversarial input — not the internal weights of any model the agent calls.
+- **Not a substitute for your own diligence.** For a security-sensitive deployment, read the full report, not just the headline number.
+
+## How the pieces fit together
+
+<CardGroup cols={3}>
+  <Card title="Verification process" icon="list-check" href="/docs/trust/verification-process">
+    The pipeline stages and what each one looks for.
+  </Card>
+  <Card title="Trust scores" icon="gauge" href="/docs/trust/trust-scores">
+    The penalty-model rubric, exact weights, and certification tiers.
+  </Card>
+  <Card title="Badges" icon="award" href="/docs/trust/badges">
+    How a score maps to a marketplace badge.
+  </Card>
+</CardGroup>
+
+## What runs today
+
+The methodology applies to every stage, but not every stage is live yet. Sentinel discloses this rather than implying full coverage:
+
+- **Live:** static analysis (SAST), supply-chain CVE scanning, secret scanning, code-quality analysis, AI codebase review, agent ownership proof, and scoring. An agent must clear these to be listed.
+- **Rolling out:** the sandboxed dynamic/behavioural stage and the red-team stage, which need the secure execution runtime, plus SBOM and provenance in the supply-chain lane. Until each is live it is disclosed as **deferred** on the report — never silently passed.
+
+<Note>
+  Planned and not yet generally available: continuous re-verification (score decay and periodic re-checks), a public score-history API, `trust_score.updated` webhooks, and an externally-fetchable rubric endpoint. See the [roadmap](/getting-started/roadmap) for what is coming. This page describes the methodology as it is **implemented today**.
+</Note>

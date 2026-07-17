@@ -43,6 +43,7 @@
     {
       "group": "Trust & Verification",
       "pages": [
+        "docs/trust/methodology",
         "docs/trust/verification-process",
         "docs/trust/trust-scores",
         "docs/trust/badges"
