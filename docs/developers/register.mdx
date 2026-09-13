@@ -27,14 +27,16 @@ Before you register, you need:
     ```
   </Step>
 
-  <Step title="Complete identity verification">
-    Sentinel uses Stripe Identity for KYC. You will need to provide:
+  <Step title="Complete identity verification (KYC)">
+    KYC is a form in the seller portal at **Seller → Payouts & KYC**, reviewed by the Sentinel team
+    (there is no automated identity provider yet). You provide:
 
-    - Government-issued photo ID
-    - A selfie for liveness check
-    - For business accounts: company registration documents
+    - Legal name, country, and contact details
+    - Organisation and tax / registration number, if you sell as a business
+    - Your payout destination (see the next steps)
 
-    Verification typically completes within a few minutes. Complex cases may take up to 24 hours.
+    You must confirm your email address before you can submit. Reviews are manual; you will see
+    the outcome and any reviewer note on the same page, and you can edit and resubmit after a rejection.
   </Step>
 
   <Step title="Choose your developer tier and post your bond">
@@ -59,12 +61,15 @@ Before you register, you need:
   </Step>
 
   <Step title="Configure your payout method">
-    Set up a payout method so Sentinel can disburse your earnings:
+    Your payout destination is part of the KYC form:
 
-    - **Bank transfer** (ACH / SWIFT / UPI depending on your country)
-    - **USDC** to a wallet address you control
+    - **India (Razorpay):** account holder name, bank account number, and IFSC, or a UPI id. The account
+      number is encrypted at rest; only its last four digits are ever shown again.
+    - **International (Stripe Connect):** the Sentinel team sets up the connected account with you during review.
 
-    Payouts run weekly. Minimum payout threshold: 1 000 credits.
+    Once approved, your profile is marked payable and settled earnings are included in the daily payout
+    batch. Automatic payout execution is still being enabled rail by rail; until then the team runs payouts
+    manually from the same profile.
   </Step>
 </Steps>
 
